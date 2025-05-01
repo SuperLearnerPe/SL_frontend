@@ -1,4 +1,4 @@
-const BASE_URL = "https://backend-as-sp-426148382897.us-central1.run.app"
+const BASE_URL = "https://backend-superlearner-1083661745884.us-central1.run.app"
 
 // Obtener todos los estudiantes con sus cursos
 export const getAllStudentsWithCourses = async () => {
