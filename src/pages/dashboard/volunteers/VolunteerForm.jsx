@@ -195,7 +195,6 @@ export default function VolunteerForm({ open, onClose, onSave, volunteer, setVol
               error={!!errors.email}
               helperText={errors.email}
               required
-              disabled={!!volunteer.id}
             />
           </Grid>
           <Grid item xs={12} sm={6}>
