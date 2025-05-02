@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Dialog, DialogTitle, DialogContent, DialogActions, Button, Grid, TextField, FormControl, InputLabel, Select, MenuItem, Typography, Autocomplete } from '@mui/material';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFnsV3';
 import { LocalizationProvider, DatePicker } from '@mui/x-date-pickers';
 import { es } from 'date-fns/locale';
 import { format, isValid } from 'date-fns';
+import countryList from 'react-select-country-list';
 
 const courses = [
   { id: 1, name: 'Inglés 5 - 7' },
@@ -16,14 +17,13 @@ const courses = [
   { id: 8, name: 'Matematicas' },
 ];
 
-const countries = [
-  "Argentina", "Bolivia", "Brasil", "Chile", "Colombia", "Ecuador", "Paraguay", "Perú", "Uruguay", "Venezuela"
-];
-
 export default function VolunteerForm({ open, onClose, onSave, volunteer, setVolunteer }) {
   const [errors, setErrors] = useState({});
   const [showCourseSelect, setShowCourseSelect] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  
+  // Obtener la lista completa de países usando useMemo para optimizar
+  const countries = useMemo(() => countryList().getData(), []);
 
   useEffect(() => {
     if (open) {
@@ -101,6 +101,14 @@ export default function VolunteerForm({ open, onClose, onSave, volunteer, setVol
     }));
   };
 
+  // Manejar cambio de país usando el nuevo formato
+  const handleCountryChange = (event, newValue) => {
+    setVolunteer(prev => ({
+      ...prev,
+      nationality: newValue ? newValue.label : ''
+    }));
+  };
+
   const isFormValid = () => {
     if (!volunteer) return false;
     const requiredFields = ['name', 'last_name', 'personal_email', 'email', 'phone', 'nationality', 'gender', 'document_type', 'document_id', 'birthdate', 'role'];
@@ -113,6 +121,12 @@ export default function VolunteerForm({ open, onClose, onSave, volunteer, setVol
     onSave(volunteer).finally(() => {
       setIsSaving(false);
     });
+  };
+
+  // Función para encontrar el objeto de país basado en su nombre
+  const findCountryObject = (countryName) => {
+    if (!countryName) return null;
+    return countries.find(country => country.label === countryName) || null;
   };
 
   if (!volunteer) {
@@ -201,10 +215,9 @@ export default function VolunteerForm({ open, onClose, onSave, volunteer, setVol
           <Grid item xs={12} sm={6}>
             <Autocomplete
               options={countries}
-              value={volunteer.nationality || null}
-              onChange={(event, newValue) => {
-                setVolunteer(prev => ({ ...prev, nationality: newValue }));
-              }}
+              value={findCountryObject(volunteer.nationality)}
+              onChange={handleCountryChange}
+              getOptionLabel={(option) => option.label}
               renderInput={(params) => (
                 <TextField
                   {...params}

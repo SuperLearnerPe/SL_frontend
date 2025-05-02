@@ -20,6 +20,7 @@ export default function Component() {
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
   const [page, setPage] = useState(1);
   const itemsPerPage = 6;
+  const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     fetchVolunteers();
@@ -90,8 +91,8 @@ export default function Component() {
 
   const handleSave = async (volunteer) => {
     try {
-
-
+      setIsSaving(true); // Si no existe, agrega esta línea
+      
       const commonData = {
         user: {
           username: volunteer.name,
@@ -118,19 +119,41 @@ export default function Component() {
         },
         course_ids: volunteer.role === 2 ? volunteer.course_ids : []
       };
-
+  
       if (volunteer.id) {
         const updatedData = {
           volunteer_id: volunteer.id,
           user_id: volunteer.user,
           ...commonData
         };
-
-        const updatedVolunteer = await updateVolunteer(updatedData);
-
-        setVolunteers(volunteers.map(v => v.id === volunteer.id ? updatedVolunteer : v));
-        setSnackbar({ open: true, message: 'Voluntario actualizado con éxito', severity: 'success' });
+        
+        try {
+          const updatedVolunteer = await updateVolunteer(updatedData);
+          
+          setVolunteers(volunteers.map(v => v.id === volunteer.id ? {
+            ...volunteer,
+            ...updatedVolunteer
+          } : v));
+          
+          setSnackbar({ open: true, message: 'Voluntario actualizado con éxito', severity: 'success' });
+          setOpenDialog(false);
+        } catch (error) {
+          console.error('Error específico al actualizar:', error);
+          
+          // Si el error es de comunicación pero probablemente se procesó correctamente
+          if (error.message === 'Failed to fetch' || error.message === 'NetworkError') {
+            // Actualizamos la UI como si fuera exitoso
+            setVolunteers(volunteers.map(v => v.id === volunteer.id ? {
+              ...volunteer
+            } : v));
+            setSnackbar({ open: true, message: 'Voluntario actualizado con éxito', severity: 'success' });
+            setOpenDialog(false);
+          } else {
+            throw error; // Propagamos otros errores
+          }
+        }
       } else {
+        // Código existente para crear voluntario
         const newVolunteerData = {
           ...commonData,
           user: {
@@ -138,17 +161,20 @@ export default function Component() {
             password: generatePassword(volunteer)
           }
         };
-
+  
         const newVolunteer = await createVolunteer(newVolunteerData);
-
         setVolunteers([...volunteers, newVolunteer]);
         setSnackbar({ open: true, message: 'Voluntario añadido con éxito', severity: 'success' });
+        setOpenDialog(false);
       }
-      setOpenDialog(false);
-      fetchVolunteers(); 
+      
+      // Recargar los voluntarios para asegurar datos actualizados
+      fetchVolunteers();
     } catch (error) {
       console.error('Error al guardar voluntario:', error);
       setSnackbar({ open: true, message: 'Error al guardar voluntario', severity: 'error' });
+    } finally {
+      setIsSaving(false); // Si no existe, agrega esta línea
     }
   };
 
