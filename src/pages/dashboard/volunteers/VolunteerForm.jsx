@@ -3,7 +3,7 @@ import { Dialog, DialogTitle, DialogContent, DialogActions, Button, Grid, TextFi
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFnsV3';
 import { LocalizationProvider, DatePicker } from '@mui/x-date-pickers';
 import { es } from 'date-fns/locale';
-import { format, isValid } from 'date-fns';
+import { isValid, parseISO } from 'date-fns';
 import countryList from 'react-select-country-list';
 
 const courses = [
@@ -48,11 +48,6 @@ export default function VolunteerForm({ open, onClose, onSave, volunteer, setVol
           error = 'Email inválido';
         }
         break;
-      case 'phone':
-        if (!/^\d{9}$/.test(value)) {
-          error = 'Debe contener 9 dígitos';
-        }
-        break;
       case 'document_id':
         if (!/^\d{8,12}$/.test(value)) {
           error = 'Debe contener entre 8 y 12 dígitos';
@@ -80,10 +75,12 @@ export default function VolunteerForm({ open, onClose, onSave, volunteer, setVol
 
   const handleDateChange = (newValue) => {
     if (newValue && isValid(newValue)) {
-      const formattedDate = format(newValue, 'yyyy-MM-dd');
+      // Convertir a string ISO y tomar solo la parte de la fecha (YYYY-MM-DD)
+      const isoDate = newValue.toISOString().split('T')[0];
+      
       setVolunteer(prev => ({
         ...prev,
-        birthdate: formattedDate
+        birthdate: isoDate
       }));
     } else {
       setVolunteer(prev => ({
@@ -205,10 +202,7 @@ export default function VolunteerForm({ open, onClose, onSave, volunteer, setVol
               variant="outlined"
               value={volunteer.phone || ''}
               onChange={handleChange}
-              error={!!errors.phone}
-              helperText={errors.phone}
               required
-              inputProps={{ maxLength: 9 }}
             />
           </Grid>
           <Grid item xs={12} sm={6}>
@@ -273,20 +267,19 @@ export default function VolunteerForm({ open, onClose, onSave, volunteer, setVol
             <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={es}>
               <DatePicker
                 label="Fecha de Nacimiento"
-                value={volunteer.birthdate ? new Date(volunteer.birthdate) : null}
+                value={volunteer.birthdate ? parseISO(volunteer.birthdate) : null}
                 onChange={handleDateChange}
-                renderInput={(params) => (
-                  <TextField
-                    {...params}
-                    fullWidth
-                    required
-                    inputProps={{
-                      ...params.inputProps,
-                      placeholder: "YYYY-MM-DD",
-                      readOnly: true
-                    }}
-                  />
-                )}
+                format="dd/MM/yyyy"
+                slotProps={{
+                  textField: {
+                    variant: "outlined",
+                    fullWidth: true,
+                    required: true,
+                    inputProps: {
+                      placeholder: "DD/MM/YYYY",
+                    }
+                  }
+                }}
               />
             </LocalizationProvider>
           </Grid>

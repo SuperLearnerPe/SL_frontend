@@ -24,12 +24,14 @@ export default function AttendancePage() {
 
   const mapAttendanceToRadioValue = (attendance) => {
     switch (attendance) {
-      case 'ONTIME':
-        return 'A';
-      case 'LATE':
+      case 'PRESENT':
+        return 'P';
+      case 'TARDY':
         return 'T';
-      case 'FAIL':
-        return 'F';
+      case 'ABSENT':
+        return 'A';
+      case 'JUSTIFIED':
+        return 'J';
       default:
         return '';
     }
@@ -43,7 +45,7 @@ export default function AttendancePage() {
 
     const newSelectedOption = {};
     students.forEach(student => {
-      newSelectedOption[student.id] = 'A';
+      newSelectedOption[student.id] = 'P';
     });
     setSelectedOption(newSelectedOption);
     toast.success('Todos los estudiantes han sido marcados como presentes.');
@@ -84,15 +86,28 @@ export default function AttendancePage() {
 
     Promise.all([fetchStudents, fetchCourseInfo])
       .then(([studentsResponse, courseInfoResponse]) => {
-        if (studentsResponse.data && studentsResponse.data.length > 0) {
-          setStudents(studentsResponse.data);
-          const initialAttendance = studentsResponse.data.reduce((acc, student) => {
+        // Verificar si la respuesta tiene la propiedad 'students'
+        const studentsData = studentsResponse.data.students || studentsResponse.data;
+        
+        if (studentsData && studentsData.length > 0) {
+          // Mapear los datos para adaptarlos a la estructura esperada
+          const formattedStudents = studentsData.map(student => ({
+            id: student.id,
+            name: student.nombre_completo?.split(' ')[0] || '',        // Extraer nombre
+            last_name: student.nombre_completo?.split(' ').slice(1).join(' ') || '',  // Extraer apellido
+            birthdate: student.fecha_nacimiento,
+            attendance: student.asistencia || '',
+            // Añadir otros campos necesarios
+          }));
+          
+          setStudents(formattedStudents);
+          const initialAttendance = formattedStudents.reduce((acc, student) => {
             acc[student.id] = mapAttendanceToRadioValue(student.attendance);
             return acc;
           }, {});
           setSelectedOption(initialAttendance);
           
-          const allMarked = studentsResponse.data.every(student => student.attendance !== '');
+          const allMarked = formattedStudents.every(student => student.attendance !== '');
           setIsInitiallyMarked(allMarked);
         } else {
           setStudents([]);
@@ -136,7 +151,11 @@ export default function AttendancePage() {
   
     const attendances = Object.entries(selectedOption).map(([id, status]) => ({
       id: parseInt(id),
-      attendance: status === 'A' ? 'ONTIME' : status === 'T' ? 'LATE' : 'FAIL',
+      attendance: 
+        status === 'P' ? 'PRESENT' : 
+        status === 'T' ? 'TARDY' : 
+        status === 'A' ? 'ABSENT' : 
+        status === 'J' ? 'JUSTIFIED' : '',
     }));
   
     const dataToSend = {

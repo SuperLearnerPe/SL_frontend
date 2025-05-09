@@ -1,6 +1,6 @@
 import React from 'react';
 import { useMediaQuery, useTheme } from '@mui/material';
-import { Box, Radio, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, RadioGroup, FormControlLabel, Avatar, Chip, Card, CardContent, Typography } from '@mui/material';
+import { Box, Radio, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, RadioGroup, FormControlLabel, Avatar, Chip, Card, CardContent, Typography, FormControl } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import { motion, AnimatePresence } from 'framer-motion';
 import { School, Cake, Event } from '@mui/icons-material';
@@ -31,14 +31,16 @@ const StyledRadio = styled(FormControlLabel)(({ theme }) => ({
 const AttendanceChip = styled(Chip)(({ theme, status }) => ({
   fontWeight: 'bold',
   backgroundColor: 
-    status === 'A' ? theme.palette.success.light :
+    status === 'P' ? theme.palette.success.light :
     status === 'T' ? theme.palette.warning.light :
-    status === 'F' ? theme.palette.error.light :
+    status === 'A' ? theme.palette.error.light :
+    status === 'J' ? theme.palette.info.light :
     theme.palette.grey[300],
   color: 
-    status === 'A' ? theme.palette.success.contrastText :
+    status === 'P' ? theme.palette.success.contrastText :
     status === 'T' ? theme.palette.warning.contrastText :
-    status === 'F' ? theme.palette.error.contrastText :
+    status === 'A' ? theme.palette.error.contrastText :
+    status === 'J' ? theme.palette.info.contrastText :
     theme.palette.text.primary,
 }));
 
@@ -81,30 +83,40 @@ const MobileStudentCard = ({ student, courseInfo, selectedOption, handleOptionCh
           {formatDate(student.birthdate)}
         </Typography>
       </Box>
-      <RadioGroup
-        row
-        value={selectedOption[student.id] || ''}
-        onChange={(e) => handleOptionChange(student.id, e.target.value)}
-      >
-        <StyledRadio 
-          value="A" 
-          control={<Radio color="success" />} 
-          label={<Typography color="success.main" fontWeight="bold">A</Typography>}
-          disabled={isInitiallyMarked}
-        />
-        <StyledRadio 
-          value="T" 
-          control={<Radio color="warning" />} 
-          label={<Typography color="warning.main" fontWeight="bold">T</Typography>}
-          disabled={isInitiallyMarked}
-        />
-        <StyledRadio 
-          value="F" 
-          control={<Radio color="error" />} 
-          label={<Typography color="error.main" fontWeight="bold">F</Typography>}
-          disabled={isInitiallyMarked}
-        />
-      </RadioGroup>
+      <FormControl>
+        <RadioGroup
+          row
+          name={`attendance-${student.id}`}
+          value={selectedOption[student.id] || ''}
+          onChange={(e) => handleOptionChange(student.id, e.target.value)}
+          sx={{ mt: 1 }}
+        >
+          <FormControlLabel 
+            value="P" 
+            control={<Radio size="small" />} 
+            label="Presente" 
+            disabled={isInitiallyMarked} 
+          />
+          <FormControlLabel 
+            value="T" 
+            control={<Radio size="small" />} 
+            label="Tarde" 
+            disabled={isInitiallyMarked} 
+          />
+          <FormControlLabel 
+            value="A" 
+            control={<Radio size="small" />} 
+            label="Ausente" 
+            disabled={isInitiallyMarked} 
+          />
+          <FormControlLabel 
+            value="J" 
+            control={<Radio size="small" />} 
+            label="Justificado" 
+            disabled={isInitiallyMarked} 
+          />
+        </RadioGroup>
+      </FormControl>
     </CardContent>
   </Card>
 );
@@ -166,7 +178,7 @@ const StudentsTable = ({
                   <Box display="flex" alignItems="center">
                     <Avatar src={student.avatar} alt={student.name} sx={{ width: 40, height: 40, mr: 2 }} />
                     <Box>
-                      <Typography variant="subtitle1">{`${student.name} ${student.last_name}`}</Typography>
+                      <Typography variant="subtitle1">{student.nombre_completo || `${student.name} ${student.last_name}`}</Typography>
                     </Box>
                   </Box>
                 </TableCell>
@@ -174,32 +186,42 @@ const StudentsTable = ({
                 <TableCell>
                   <Chip label="S1" color="secondary" size="small" />
                 </TableCell>
-                <TableCell>{formatDate(student.birthdate)}</TableCell>
+                <TableCell>{formatDate(student.fecha_nacimiento || student.birthdate)}</TableCell>
                 <TableCell>
-                  <RadioGroup
-                    row
-                    value={selectedOption[student.id] || ''}
-                    onChange={(e) => handleOptionChange(student.id, e.target.value)}
-                  >
-                    <StyledRadio 
-                      value="A" 
-                      control={<Radio color="success" />} 
-                      label={<Typography color="success.main" fontWeight="bold">A</Typography>}
-                      disabled={isInitiallyMarked}
-                    />
-                    <StyledRadio 
-                      value="T" 
-                      control={<Radio color="warning" />} 
-                      label={<Typography color="warning.main" fontWeight="bold">T</Typography>}
-                      disabled={isInitiallyMarked}
-                    />
-                    <StyledRadio 
-                      value="F" 
-                      control={<Radio color="error" />} 
-                      label={<Typography color="error.main" fontWeight="bold">F</Typography>}
-                      disabled={isInitiallyMarked}
-                    />
-                  </RadioGroup>
+                  <FormControl>
+                    <RadioGroup
+                      row
+                      name={`attendance-${student.id}`}
+                      value={selectedOption[student.id] || ''}
+                      onChange={(e) => handleOptionChange(student.id, e.target.value)}
+                      sx={{ mt: 1 }}
+                    >
+                      <FormControlLabel 
+                        value="P" 
+                        control={<Radio size="small" />} 
+                        label="Presente" 
+                        disabled={isInitiallyMarked} 
+                      />
+                      <FormControlLabel 
+                        value="T" 
+                        control={<Radio size="small" />} 
+                        label="Tarde" 
+                        disabled={isInitiallyMarked} 
+                      />
+                      <FormControlLabel 
+                        value="A" 
+                        control={<Radio size="small" />} 
+                        label="Ausente" 
+                        disabled={isInitiallyMarked} 
+                      />
+                      <FormControlLabel 
+                        value="J" 
+                        control={<Radio size="small" />} 
+                        label="Justificado" 
+                        disabled={isInitiallyMarked} 
+                      />
+                    </RadioGroup>
+                  </FormControl>
                 </TableCell>
               </StyledTableRow>
             ))}

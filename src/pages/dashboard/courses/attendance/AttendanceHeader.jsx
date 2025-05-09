@@ -61,14 +61,17 @@ export default function AttendanceHeader({ courseInfo, searchTerm, setSearchTerm
       // Aplicar color de fondo a la celda de asistencia según el valor
       const attendanceCell = row.getCell('attendance');
       switch (selectedOption[student.id]) {
-        case 'A':
+        case 'P':
           attendanceCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: '92D050' } }; // Verde
           break;
         case 'T':
           attendanceCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFF00' } }; // Amarillo
           break;
-        case 'F':
+        case 'A':
           attendanceCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF0000' } }; // Rojo
+          break;
+        case 'J':
+          attendanceCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: '4472C4' } }; // Azul
           break;
       }
     });
@@ -94,6 +97,18 @@ export default function AttendanceHeader({ courseInfo, searchTerm, setSearchTerm
       alignment: { horizontal: 'center' }
     };
     worksheet.mergeCells('A1:F1');
+
+    // Añadir una fila de leyenda
+    const legendRow = worksheet.addRow(['Leyenda:', '', '', '', '', '']);
+    worksheet.mergeCells(`A${legendRow.number}:F${legendRow.number}`);
+    legendRow.getCell('A').value = 'Leyenda de Asistencia:';
+    legendRow.getCell('A').font = { bold: true };
+
+    // Añadir elementos de la leyenda
+    worksheet.addRow(['P - PRESENT (Presente)', '', '', '', '', '']);
+    worksheet.addRow(['T - TARDY (Tarde)', '', '', '', '', '']);
+    worksheet.addRow(['A - ABSENT (Ausente)', '', '', '', '', '']);
+    worksheet.addRow(['J - JUSTIFIED (Justificado)', '', '', '', '', '']);
 
     // Generar archivo
     const buffer = await workbook.xlsx.writeBuffer();
