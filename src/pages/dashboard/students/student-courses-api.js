@@ -1,9 +1,21 @@
 const BASE_URL = "https://backend-superlearner-1083661745884.us-central1.run.app"
 
+// Función helper para obtener el token
+const getAuthHeaders = () => {
+  const token = localStorage.getItem('access_token');
+  return {
+    'Content-Type': 'application/json',
+    ...(token && { 'Authorization': `Token ${token}` })
+  };
+};
+
 // Obtener todos los estudiantes con sus cursos
 export const getAllStudentsWithCourses = async () => {
   try {
-    const response = await fetch(`${BASE_URL}/api/students/all-students-courses-info`)
+    const response = await fetch(`${BASE_URL}/api/students/all-students-courses-info/`, {
+      method: 'GET',
+      headers: getAuthHeaders()
+    })
 
     if (!response.ok) {
       throw new Error("Error al obtener los estudiantes")
@@ -25,9 +37,7 @@ export const assignCoursesToStudent = async (studentId, classIds) => {
 
     const response = await fetch(`${BASE_URL}/api/students/assign-courses/?student_id=${studentId}`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: getAuthHeaders(),
       body: body,
     })
 
@@ -50,9 +60,7 @@ export const removeCoursesFromStudent = async (studentId, classIds) => {
 
     const response = await fetch(`${BASE_URL}/api/students/remove-courses/?student_id=${studentId}`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: getAuthHeaders(),
       body: body,
     })
 

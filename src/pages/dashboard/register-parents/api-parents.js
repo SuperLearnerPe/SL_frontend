@@ -1,9 +1,21 @@
 const BASE_URL = "https://backend-superlearner-1083661745884.us-central1.run.app"
 
+// Función helper para obtener el token
+const getAuthHeaders = () => {
+  const token = localStorage.getItem('access_token');
+  return {
+    'Content-Type': 'application/json',
+    ...(token && { 'Authorization': `Token ${token}` })
+  };
+};
+
 // Obtener todos los padres
 export const getParents = async () => {
   try {
-    const response = await fetch(`${BASE_URL}/api/parents/get/`)
+    const response = await fetch(`${BASE_URL}/api/parents/get/`, {
+      method: 'GET',
+      headers: getAuthHeaders()
+    })
     if (!response.ok) {
       throw new Error("Network response was not ok")
     }
@@ -17,7 +29,10 @@ export const getParents = async () => {
 // Obtener un padre por ID
 export const getParentById = async (parentId) => {
   try {
-    const response = await fetch(`${BASE_URL}/api/parents/get-id/?parent_id=${parentId}`)
+    const response = await fetch(`${BASE_URL}/api/parents/get-id/?parent_id=${parentId}`, {
+      method: 'GET',
+      headers: getAuthHeaders()
+    })
     if (!response.ok) {
       throw new Error("Network response was not ok")
     }
@@ -31,7 +46,6 @@ export const getParentById = async (parentId) => {
 // Crear un nuevo padre
 export const createParent = async (parentData) => {
   try {
-    // Format the data consistently with null for empty email
     const formattedData = {
       ...parentData,
       email: parentData.email ? parentData.email : null
@@ -39,9 +53,7 @@ export const createParent = async (parentData) => {
     
     const response = await fetch(`${BASE_URL}/api/parents/create/`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
+      headers: getAuthHeaders(),
       body: JSON.stringify(formattedData),
     })
     if (!response.ok) {
@@ -60,12 +72,10 @@ export const updateParent = async (parentId, parentData) => {
     console.log("API update - parentId:", parentId);
     console.log("API update - parentData:", parentData);
     
-    
-    // Ensure all expected fields are present and properly formatted
     const formattedData = {
       name: parentData.name,
       last_name: parentData.last_name,
-      document_id: parentData.document_id, // Include document_id in update
+      document_id: parentData.document_id,
       email: parentData.email ? parentData.email : null,
       phone: parentData.phone || "",
       gender: parentData.gender,
@@ -75,7 +85,6 @@ export const updateParent = async (parentId, parentData) => {
       nationality: parentData.nationality || "",
       birthdate: parentData.birthdate,
       document_type: parentData.document_type || "DNI",
-      // Include status if present in the parentData, otherwise don't change it
       ...(parentData.status !== undefined ? { status: parentData.status } : {})
     };
     
@@ -83,9 +92,7 @@ export const updateParent = async (parentId, parentData) => {
     
     const response = await fetch(`${BASE_URL}/api/parents/update/?parent_id=${parentId}`, {
       method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-      },
+      headers: getAuthHeaders(),
       body: JSON.stringify(formattedData),
     })
     
@@ -106,9 +113,7 @@ export const toggleParentStatus = async (parentId) => {
   try {
     const response = await fetch(`${BASE_URL}/api/parents/toggle-status/?parent_id=${parentId}`, {
       method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-      },
+      headers: getAuthHeaders(),
     })
     if (!response.ok) {
       throw new Error("Network response was not ok")
@@ -125,6 +130,7 @@ export const deleteParent = async (parentId) => {
   try {
     const response = await fetch(`${BASE_URL}/api/parents/delete/?parent_id=${parentId}`, {
       method: "DELETE",
+      headers: getAuthHeaders(),
     })
     if (!response.ok) {
       throw new Error("Network response was not ok")
@@ -135,4 +141,3 @@ export const deleteParent = async (parentId) => {
     throw error
   }
 }
-
