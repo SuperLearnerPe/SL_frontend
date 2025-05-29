@@ -51,6 +51,21 @@ export default defineConfig({
         changeOrigin: true,
         secure: true,
         rewrite: (path) => path.replace(/^\/api\/student\/create_session/, '/api/student/create_session'),
+      },
+      '/api/students/': {
+        target: 'https://backend-superlearner-1083661745884.us-central1.run.app',
+        changeOrigin: true,
+        secure: true,
+      },
+      '/api/parents/': {
+        target: 'https://backend-superlearner-1083661745884.us-central1.run.app',
+        changeOrigin: true,
+        secure: true,
+      },
+      '/volunteers/': {
+        target: 'https://backend-superlearner-1083661745884.us-central1.run.app',
+        changeOrigin: true,
+        secure: true,
       }
     },
   },

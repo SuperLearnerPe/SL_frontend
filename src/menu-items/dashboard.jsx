@@ -1,4 +1,3 @@
-
 import {
   PartitionOutlined,
   CalendarOutlined,
@@ -9,7 +8,8 @@ import {
   LogoutOutlined,
   UserAddOutlined,
   TeamOutlined,
-  SkinOutlined
+  SkinOutlined,
+  FileExcelOutlined
 } from "@ant-design/icons"
 import { useUser } from '../context/UserContext';
 
@@ -24,7 +24,8 @@ const icons = {
   PartitionOutlined,
   UserAddOutlined,
   TeamOutlined,
-  SkinOutlined
+  SkinOutlined,
+  FileExcelOutlined
 };
 
 // Manejar el cierre de sesión
@@ -80,6 +81,14 @@ const Dashboard = () => {
           url: '/students',
           icon: icons.UsergroupAddOutlined,
           breadcrumbs: false,
+        },
+        {
+          id: 'excels',
+          title: 'Reportes Excel',
+          type: 'item',
+          url: '/excels',
+          icon: icons.FileExcelOutlined,
+          breadcrumbs: false
         },
       ]
       : []), 

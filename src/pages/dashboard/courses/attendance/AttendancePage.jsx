@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Container, Box, Card, CardHeader, CardContent, Button, ThemeProvider, CircularProgress, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Typography } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import EditIcon from '@mui/icons-material/Edit';
 import { theme } from '../../../../themes/theme';
 import StudentsTable from './StudentsTable';
 import AttendanceHeader from './AttendanceHeader';
@@ -20,6 +21,7 @@ export default function AttendancePage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isInitiallyMarked, setIsInitiallyMarked] = useState(false);
   const [openConfirmDialog, setOpenConfirmDialog] = useState(false);
+  const [isModifying, setIsModifying] = useState(false);
   const [error, setError] = useState(null);
 
   const mapAttendanceToRadioValue = (attendance) => {
@@ -38,8 +40,8 @@ export default function AttendancePage() {
   };
 
   const handleMarkAllPresent = () => {
-    if (isInitiallyMarked) {
-      toast.info('La asistencia ya ha sido marcada y no se puede modificar.');
+    if (isInitiallyMarked && !isModifying) {
+      toast.info('La asistencia ya ha sido marcada. Habilite el modo de modificación primero.');
       return;
     }
 
@@ -51,6 +53,11 @@ export default function AttendancePage() {
     toast.success('Todos los estudiantes han sido marcados como presentes.');
   };
 
+  // Enable modification mode
+  const handleEnableModification = () => {
+    setIsModifying(true);
+    toast.info('Modo de modificación activado. Ahora puede modificar la asistencia.');
+  };
 
   useEffect(() => {
     const token = localStorage.getItem('access_token');
@@ -130,7 +137,7 @@ export default function AttendancePage() {
   }, [courseId, sessionNum]);
 
   const handleOptionChange = (studentId, value) => {
-    if (!isInitiallyMarked) {
+    if (!isInitiallyMarked || isModifying) {
       setSelectedOption(prevState => ({
         ...prevState,
         [studentId]: value,
@@ -176,11 +183,14 @@ export default function AttendancePage() {
       }
     )
     .then(response => {
-      toast.success('¡Asistencia actualizada exitosamente!');
+      toast.success(isModifying 
+        ? '¡Asistencia modificada exitosamente!' 
+        : '¡Asistencia actualizada exitosamente!');
       setIsInitiallyMarked(true);
+      setIsModifying(false);
     })
     .catch(error => {
-      console.error('Error updating attendance:', error.response.data);
+      console.error('Error updating attendance:', error.response?.data || error);
       toast.error('Error al actualizar la asistencia. Intenta de nuevo.');
     })
     .finally(() => {
@@ -197,7 +207,7 @@ export default function AttendancePage() {
   );
 
   const isAllStudentsMarked = students.length > 0 && students.every(student => selectedOption[student.id] !== '');
-  const isButtonDisabled = isInitiallyMarked || !isAllStudentsMarked || isSubmitting;
+  const isButtonDisabled = (isInitiallyMarked && !isModifying) || !isAllStudentsMarked || isSubmitting;
 
   const handleGoBack = () => {
     navigate(-1);
@@ -227,6 +237,19 @@ export default function AttendancePage() {
             <CardHeader
               title={courseInfo ? courseInfo.name : 'Cargando curso...'}
               subheader={courseInfo ? `${courseInfo.day} - ${courseInfo.start_time} - ${courseInfo.end_time}` : ''}
+              action={
+                isInitiallyMarked && !isModifying && (
+                  <Button
+                    variant="outlined"
+                    color="secondary"
+                    startIcon={<EditIcon />}
+                    onClick={handleEnableModification}
+                    sx={{ mt: 1, mr: 1 }}
+                  >
+                    Modificar Asistencia
+                  </Button>
+                )
+              }
             />
             <CardContent>
               {error ? (
@@ -242,23 +265,26 @@ export default function AttendancePage() {
                     students={filteredStudents}
                     selectedOption={selectedOption}
                     onMarkAllPresent={handleMarkAllPresent}
+                    isModifying={isModifying}
                   />
                   <StudentsTable
                     students={filteredStudents}
                     courseInfo={courseInfo}
                     selectedOption={selectedOption}
                     handleOptionChange={handleOptionChange}
-                    isInitiallyMarked={isInitiallyMarked}
+                    isInitiallyMarked={isInitiallyMarked && !isModifying}
                   />
                   <Box mt={2} display="flex" justifyContent="flex-end">
-                    <Button
-                      variant="contained"
-                      color="primary"
-                      onClick={handleSubmit}
-                      disabled={isButtonDisabled}
-                    >
-                      {isSubmitting ? 'Enviando...' : 'Enviar Asistencia'}
-                    </Button>
+                    {((!isInitiallyMarked || isModifying) && isAllStudentsMarked) && (
+                      <Button
+                        variant="contained"
+                        color="primary"
+                        onClick={handleSubmit}
+                        disabled={isSubmitting}
+                      >
+                        {isSubmitting ? 'Enviando...' : isModifying ? 'Guardar Modificaciones' : 'Enviar Asistencia'}
+                      </Button>
+                    )}
                   </Box>
                 </>
               )}
@@ -272,10 +298,15 @@ export default function AttendancePage() {
         aria-labelledby="alert-dialog-title"
         aria-describedby="alert-dialog-description"
       >
-        <DialogTitle id="alert-dialog-title">{"Confirm Attendance Submission"}</DialogTitle>
+        <DialogTitle id="alert-dialog-title">
+          {isModifying ? "Confirmar modificación de asistencia" : "Confirmar envío de asistencia"}
+        </DialogTitle>
         <DialogContent>
           <DialogContentText id="alert-dialog-description">
-          ¿Estás seguro de que deseas enviar la asistencia? Esta acción no se puede deshacer.
+            {isModifying 
+              ? "¿Estás seguro de que deseas modificar la asistencia? Esta acción sobrescribirá los registros anteriores."
+              : "¿Estás seguro de que deseas enviar la asistencia? Esta acción no se puede deshacer."
+            }
           </DialogContentText>
         </DialogContent>
         <DialogActions>

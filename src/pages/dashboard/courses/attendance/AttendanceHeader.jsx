@@ -1,12 +1,13 @@
 import React from 'react';
-import { Box, Button, TextField, useMediaQuery, useTheme } from '@mui/material';
+import { Box, Button, TextField, Typography, useMediaQuery, useTheme } from '@mui/material';
 import { Search as SearchIcon } from '@mui/icons-material';
 import ExcelJS from 'exceljs';
 import { saveAs } from 'file-saver';
 import TableViewIcon from '@mui/icons-material/TableView';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
+import InfoIcon from '@mui/icons-material/Info';
 
-export default function AttendanceHeader({ courseInfo, searchTerm, setSearchTerm, students, selectedOption, onMarkAllPresent }) {
+export default function AttendanceHeader({ courseInfo, searchTerm, setSearchTerm, students, selectedOption, onMarkAllPresent, isModifying }) {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
@@ -153,6 +154,7 @@ export default function AttendanceHeader({ courseInfo, searchTerm, setSearchTerm
               fontSize: '0.9rem',
               whiteSpace: 'nowrap'
             }}
+            disabled={!isModifying && students.some(student => selectedOption[student.id])}
           >
             Marcar Todos Presentes
           </Button>
@@ -176,6 +178,15 @@ export default function AttendanceHeader({ courseInfo, searchTerm, setSearchTerm
           </Button>
         </Box>
       </Box>
+      
+      {isModifying && (
+        <Box mt={2} bgcolor="info.lighter" p={2} borderRadius={1}>
+          <Typography variant="body2" color="info.main" fontWeight="medium">
+            <InfoIcon sx={{ fontSize: '1rem', verticalAlign: 'middle', mr: 0.5 }} />
+            Modo de modificación activado. Realice los cambios necesarios y guarde las modificaciones.
+          </Typography>
+        </Box>
+      )}
     </Box>
   );
 }

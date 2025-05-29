@@ -9,6 +9,7 @@ const MetricsPage = Loadable(lazy(() => import('pages/dashboard/metrics/metrics'
 const CrudVolunteers = Loadable(lazy(() => import('pages/dashboard/volunteers/VolunteerCrud')));
 const RegisterStudent = Loadable(lazy(() => import('pages/dashboard/register-student/StudentsCRUD')));
 const RegisterParent = Loadable(lazy(() => import('pages/dashboard/register-parents/ParentsCRUD')));
+const ExcelReports = Loadable(lazy(() => import('pages/dashboard/excels/excels')));
 // ==============================|| MAIN ROUTING ||============================== //
 
 const MainRoutes = [
@@ -72,6 +73,14 @@ const MainRoutes = [
             element: <AttendancePage />
           }
         ]
+      },
+      {
+        path: 'excels',
+        element: (
+          <PrivateRoute>
+            <ExcelReports/>
+          </PrivateRoute>
+        )
       }
     ]
   }

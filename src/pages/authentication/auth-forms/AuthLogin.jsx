@@ -45,33 +45,32 @@ export default function AuthLogin({ isDemo = false }) {
     try {
       const response = await axios.post(
         'https://backend-superlearner-1083661745884.us-central1.run.app/api/user/login/',
-        new URLSearchParams({
+        // Send as JSON object instead of URLSearchParams
+        {
           email: values.email,
           password: values.password,
-        }),
+        },
         {
           headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
+            'Content-Type': 'application/json', 
           },
           withCredentials: true,
         }
       );
-  
+
       // Log para inspeccionar la respuesta recibida
 
-  
       const token = response.data?.token || '';
       const user = response.data?.user || {};
       const role = user.role ?? '0'; // Valor predeterminado en caso de que sea undefined
       const id = user.id ?? 'N/A';
-  
+
       // Verificación extra
-     
-  
+
       if (!token || !id) {
         throw new Error('Datos incompletos recibidos del servidor.');
       }
-  
+
       // Guarda los valores en localStorage
       const now = new Date().getTime();
       localStorage.setItem('access_token', token);
@@ -81,7 +80,7 @@ export default function AuthLogin({ isDemo = false }) {
 
       // Update the role in the context
       setRole(role.toString());
-  
+
       Swal.fire({
         title: 'Inicio de Sesión correcto',
         text: 'Has ingresado correctamente',
