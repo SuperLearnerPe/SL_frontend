@@ -31,6 +31,7 @@ export const downloadManagementExcel = async (params) => {
     });
 
     // Default tipo parameter if not provided
+    
     if (!params.tipo) {
       queryParams.append('tipo', 'completo');
     }
