@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Typography,
   Container,
@@ -26,14 +26,12 @@ import {
 import {
   FileExcelOutlined,
   DownloadOutlined,
-  BarChartOutlined,
-  TeamOutlined,
-  BookOutlined,
-  CalendarOutlined
+  BarChartOutlined
 } from '@ant-design/icons';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { downloadManagementExcel, downloadImpactExcel } from './api';
+import axios from 'axios';
 
 // Helper function to format dates for API
 const formatDateForAPI = (dateString) => {
@@ -158,6 +156,18 @@ function ManagementReportDialog({ open, onClose, onDownload }) {
   const [year, setYear] = useState(new Date().getFullYear());
   const [classId, setClassId] = useState('');
 
+  // Array estático de cursos
+  const courses = [
+    { id: 1, name: "Inglés 5 - 7", dia: "Tuesday", horario: "2:30 pm - 4:30 pm" },
+    { id: 2, name: "Biblioteca", dia: "Monday", horario: "2:30 pm - 4:30 pm" },
+    { id: 3, name: "Arte", dia: "Wednesday", horario: "2:30 pm - 4:30 pm" },
+    { id: 4, name: "Lectura y escritura", dia: "Thursday", horario: "2:30 pm - 4:30 pm" },
+    { id: 5, name: "Juegos y deportes en la loza", dia: "Friday", horario: "2:30 pm - 4:30 pm" },
+    { id: 6, name: "Inglés 8 - 12", dia: "Saturday", horario: "3:00 pm - 5:00 pm" },
+    { id: 7, name: "Música", dia: "Sunday", horario: "2:00 pm - 4:00 pm" },
+    { id: 8, name: "Matemáticas", dia: "Saturday", horario: "10:00 am - 12:00 pm" },
+  ];
+
   const handleSubmit = async () => {
     try {
       setLoading(true);
@@ -227,6 +237,7 @@ function ManagementReportDialog({ open, onClose, onDownload }) {
             </Select>
           </FormControl>
 
+          {/* Campos de fecha según el tipo de reporte */}
           {reportType === 'diario' && (
             <TextField
               label="Fecha Específica"
@@ -283,14 +294,23 @@ function ManagementReportDialog({ open, onClose, onDownload }) {
             </Box>
           )}
 
-          <TextField
-            label="ID de Clase (Opcional)"
-            type="number"
-            value={classId}
-            onChange={(e) => setClassId(e.target.value)}
-            margin="normal"
-            fullWidth
-          />
+          {/* Dropdown para seleccionar clase (curso) */}
+          <FormControl fullWidth margin="normal">
+            <InputLabel id="class-select-label">Clase (Opcional)</InputLabel>
+            <Select
+              labelId="class-select-label"
+              value={classId}
+              onChange={(e) => setClassId(e.target.value)}
+              label="Clase (Opcional)"
+            >
+              <MenuItem value="">Todas las clases</MenuItem>
+              {courses.map((course) => (
+                <MenuItem key={course.id} value={course.id}>
+                  {course.name} ({course.dia}) - {course.horario}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
         </Box>
       </DialogContent>
       <DialogActions>
@@ -409,46 +429,18 @@ export default function Excels() {
 
   const reportTypes = [
     {
-      key: 'attendance',
-      title: 'Reporte de Asistencia',
-      description: 'Descarga un reporte detallado de asistencia por curso y sesión',
-      icon: <CalendarOutlined style={{ fontSize: 24 }} />,
-      color: '#66c2a5'
-    },
-    {
       key: 'management',
       title: 'Reporte de Gestión',
-      description: 'Métricas de gestión con indicadores clave de rendimiento',
+      description: 'Métricas de gestión con indicadores clave de rendimiento. Permite filtrar por periodo, fecha y clase.',
       icon: <BarChartOutlined style={{ fontSize: 24 }} />,
       color: '#6a9eda'
     },
     {
       key: 'impact',
       title: 'Reporte de Impacto',
-      description: 'Análisis del impacto en estudiantes y comunidad',
+      description: 'Análisis del impacto en estudiantes y comunidad. Configurable por periodo y umbral de significancia.',
       icon: <BarChartOutlined style={{ fontSize: 24 }} />,
       color: '#f4a582'
-    },
-    {
-      key: 'students',
-      title: 'Reporte de Estudiantes',
-      description: 'Listado completo de estudiantes con información de contacto',
-      icon: <TeamOutlined style={{ fontSize: 24 }} />,
-      color: '#fc8d62'
-    },
-    {
-      key: 'courses',
-      title: 'Reporte de Cursos',
-      description: 'Información de todos los cursos y sus horarios',
-      icon: <BookOutlined style={{ fontSize: 24 }} />,
-      color: '#8da0cb'
-    },
-    {
-      key: 'consolidated',
-      title: 'Reporte Consolidado',
-      description: 'Todos los datos en un solo archivo de Excel',
-      icon: <FileExcelOutlined style={{ fontSize: 24 }} />,
-      color: '#1976d2'
     }
   ];
 
@@ -460,28 +452,8 @@ export default function Excels() {
       case 'impact':
         setDialogOpen('impact');
         break;
-      case 'attendance':
-        toast.info('Preparando reporte de asistencia...');
-        // Simular descarga por ahora, se implementará con la API real
-        setTimeout(() => toast.success('Reporte de asistencia descargado'), 1500);
-        break;
-      case 'students':
-        toast.info('Preparando reporte de estudiantes...');
-        // Simular descarga por ahora, se implementará con la API real
-        setTimeout(() => toast.success('Reporte de estudiantes descargado'), 1500);
-        break;
-      case 'courses':
-        toast.info('Preparando reporte de cursos...');
-        // Simular descarga por ahora, se implementará con la API real
-        setTimeout(() => toast.success('Reporte de cursos descargado'), 1500);
-        break;
-      case 'consolidated':
-        toast.info('Preparando reporte consolidado...');
-        // Simular descarga por ahora, se implementará con la API real
-        setTimeout(() => toast.success('Reporte consolidado descargado'), 1500);
-        break;
       default:
-        toast.info('Función de descarga en desarrollo');
+        toast.error('Reporte no disponible');
     }
   };
 
