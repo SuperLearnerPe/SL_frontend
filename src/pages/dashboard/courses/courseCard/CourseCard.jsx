@@ -19,22 +19,24 @@ export default function CourseCard({ courseId, courseName, day, time, initialCol
   const handleColorMenuOpen = (event) => setColorMenuAnchor(event.currentTarget);
   const handleColorMenuClose = () => setColorMenuAnchor(null);
 
+  const API_URL = import.meta.env.VITE_API_URL;
+
   const updateCardColor = async (color) => {
     const token = localStorage.getItem('access_token');
     try {
       const response = await axios.post(
-        'https://backend-superlearner-1083661745884.us-central1.run.app/api/class/update_color/',
+        `${API_URL}/api/class/update_color/`,
         {
           class_id: courseId,
           color: color
         },
         {
           headers: {
-            'Accept': '*/*',
-            'Authorization': `Token ${token}`,
+            Accept: '*/*',
+            Authorization: `Token ${token}`,
             'Content-Type': 'application/json'
           },
-          withCredentials: true,
+          withCredentials: true
         }
       );
       if (response.status === 200) {
@@ -63,7 +65,7 @@ export default function CourseCard({ courseId, courseName, day, time, initialCol
   const handleCloseDialog = () => {
     setDialogOpen(false);
   };
-  
+
   const handleClickOpen = () => {
     setDialogOpen(true);
   };
@@ -79,16 +81,8 @@ export default function CourseCard({ courseId, courseName, day, time, initialCol
             <Typography variant="h6" component="div" align="center" gutterBottom color={cardColor}>
               {courseName}
             </Typography>
-            <StyledChip
-              icon={<CalendarTodayIcon />}
-              label={`${day}`}
-              bgcolor={cardColor}
-            />
-            <StyledChip
-              icon={<AccessTimeIcon />}
-              label={`${time}`}
-              bgcolor={cardColor}
-            />
+            <StyledChip icon={<CalendarTodayIcon />} label={`${day}`} bgcolor={cardColor} />
+            <StyledChip icon={<AccessTimeIcon />} label={`${time}`} bgcolor={cardColor} />
           </Box>
           <Box display="flex" justifyContent="space-between" mt={2}>
             <StyledButton variant="contained" bgcolor={cardColor} fullWidth sx={{ ml: 1 }} onClick={handleClickOpen}>
@@ -103,18 +97,10 @@ export default function CourseCard({ courseId, courseName, day, time, initialCol
         </CardContent>
       </StyledCard>
 
-      <Menu
-        anchorEl={colorMenuAnchor}
-        open={Boolean(colorMenuAnchor)}
-        onClose={handleColorMenuClose}
-      >
+      <Menu anchorEl={colorMenuAnchor} open={Boolean(colorMenuAnchor)} onClose={handleColorMenuClose}>
         <Box display="flex" flexWrap="wrap" p={1}>
           {colorOptions.map((color) => (
-            <ColorOption
-              key={color}
-              color={color}
-              onClick={() => handleColorChange(color)}
-            />
+            <ColorOption key={color} color={color} onClick={() => handleColorChange(color)} />
           ))}
         </Box>
       </Menu>

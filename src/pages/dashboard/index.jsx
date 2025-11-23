@@ -17,44 +17,39 @@ export default function DashboardDefault() {
     const userId = localStorage.getItem('id');
     const roleId = localStorage.getItem('role');
 
-
     setIsLoading(true);
     setError(null);
 
-    axios.get('https://backend-superlearner-1083661745884.us-central1.run.app/api/class/get_courses/', 
-      {
+    axios
+      .get(`${import.meta.env.VITE_API_URL}/api/class/get_courses/`, {
         params: {
-          user_id: Number(userId), 
-          role_id: Number(roleId),  
+          user_id: Number(userId),
+          role_id: Number(roleId)
         },
         headers: {
-          'Accept': '*/*',
-          'Authorization': `Token ${token}`,
+          Accept: '*/*',
+          Authorization: `Token ${token}`,
           'Content-Type': 'application/json'
         },
-        withCredentials: true,
-      }
-    )
-      .then(response => {
+        withCredentials: true
+      })
+      .then((response) => {
         setCourses(response.data);
         setFilteredCourses(response.data);
         setIsLoading(false);
       })
-      .catch(error => {
+      .catch((error) => {
         console.error('Error fetching courses:', error.response ? error.response.data : error);
         setError('Error al cargar los cursos. Por favor, intente de nuevo más tarde.');
         setIsLoading(false);
       });
-      
   }, []);
 
   const handleSearch = (event) => {
     const { value } = event.target;
     setSearchTerm(value);
 
-    const filtered = courses.filter((course) =>
-      course.name.toLowerCase().includes(value.toLowerCase())
-    );
+    const filtered = courses.filter((course) => course.name.toLowerCase().includes(value.toLowerCase()));
     setFilteredCourses(filtered);
   };
 
@@ -73,7 +68,7 @@ export default function DashboardDefault() {
               <InputAdornment position="start">
                 <SearchOutlined />
               </InputAdornment>
-            ),
+            )
           }}
           sx={{ mb: 3 }}
         />
@@ -89,12 +84,7 @@ export default function DashboardDefault() {
         ) : (
           <Grid container spacing={3}>
             {filteredCourses.map((course, index) => (
-              <Grow
-                in={true}
-                style={{ transformOrigin: '0 0 0' }}
-                {...{ timeout: 1000 + index * 200 }}
-                key={course.id || index}
-              >
+              <Grow in={true} style={{ transformOrigin: '0 0 0' }} {...{ timeout: 1000 + index * 200 }} key={course.id || index}>
                 <Grid item xs={12} sm={6} md={4} lg={3}>
                   <CourseCard
                     courseId={course.id}

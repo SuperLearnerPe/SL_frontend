@@ -44,7 +44,7 @@ export default function AuthLogin({ isDemo = false }) {
   const handleLogin = async (values, { setErrors }) => {
     try {
       const response = await axios.post(
-        'https://backend-superlearner-1083661745884.us-central1.run.app/api/user/login/',
+        `${import.meta.env.VITE_API_URL}/api/user/login/`,
         // Send as JSON object instead of URLSearchParams
         {
           email: values.email,

@@ -1,4 +1,5 @@
-const BASE_URL = "https://backend-superlearner-1083661745884.us-central1.run.app"
+const BASE_URL = import.meta.env.VITE_API_URL;
+
 
 // Función helper para obtener el token
 const getAuthHeaders = () => {

@@ -1,4 +1,3 @@
-
 import { useRef, useState, useEffect } from 'react';
 import axios from 'axios';
 
@@ -29,7 +28,6 @@ import avatar1 from 'assets/images/default.jpg';
 import ProfileDialog from './ProfileDialog';
 import SupportDialog from './SupportDialog';
 
-
 export default function Profile() {
   const theme = useTheme();
   const anchorRef = useRef(null);
@@ -44,20 +42,19 @@ export default function Profile() {
       try {
         const id_user = localStorage.getItem('id');
         const token = localStorage.getItem('access_token');
-  
-        const response = await axios.get('https://backend-superlearner-1083661745884.us-central1.run.app/api/user/Data_user/', {
+
+        const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/user/Data_user/`, {
           params: { id_user },
           headers: {
             Accept: '*/*',
             Authorization: `Token ${token}`,
-            'Content-Type': 'application/json',
+            'Content-Type': 'application/json'
           },
-          withCredentials: true,
+          withCredentials: true
         });
-  
+
         if (response.data.length > 0) {
           setUserData(response.data);
-          
         } else {
           console.error('No user data found');
         }
@@ -65,7 +62,7 @@ export default function Profile() {
         console.error('Error fetching user data:', error);
       }
     };
-  
+
     fetchUserData();
   }, []);
 
@@ -91,11 +88,9 @@ export default function Profile() {
   };
 
   const handleLogout = () => {
-
     localStorage.removeItem('id');
     localStorage.removeItem('access_token');
     localStorage.removeItem('login_time');
-  
 
     window.location.href = '/login';
   };
@@ -119,12 +114,7 @@ export default function Profile() {
         onClick={handleToggle}
       >
         <Stack direction="row" spacing={1.25} alignItems="center" sx={{ p: 0.5 }}>
-          <Avatar
-            alt="profile user"
-            src={userData && userData[0] ? userData[0].photo : avatar1}
-            size="sm"
-            sx={{ width: 32, height: 32 }}
-          />
+          <Avatar alt="profile user" src={userData && userData[0] ? userData[0].photo : avatar1} size="sm" sx={{ width: 32, height: 32 }} />
           <Typography variant="subtitle1" sx={{ textTransform: 'capitalize' }}>
             {userData && userData[0] ? `${userData[0].name} ${userData[0].last_name}` : 'Usuario'}
           </Typography>
@@ -157,17 +147,17 @@ export default function Profile() {
                     <Grid container justifyContent="space-between" alignItems="center">
                       <Grid item>
                         <Stack direction="row" spacing={1.25} alignItems="center">
-                          <Avatar 
-                            alt="profile user" 
-                            src={userData && userData[0] ? userData[0].photo : avatar1} 
-                            sx={{ width: 32, height: 32 }} 
+                          <Avatar
+                            alt="profile user"
+                            src={userData && userData[0] ? userData[0].photo : avatar1}
+                            sx={{ width: 32, height: 32 }}
                           />
                           <Stack>
                             <Typography variant="h6">
                               {userData && userData[0] ? `${userData[0].name} ${userData[0].last_name}` : 'Usuario'}
                             </Typography>
                             <Typography variant="body2" color="text.secondary">
-                              {userData && userData[0] ? userData[0].email: 'correo@ejemplo.com'}
+                              {userData && userData[0] ? userData[0].email : 'correo@ejemplo.com'}
                             </Typography>
                           </Stack>
                         </Stack>

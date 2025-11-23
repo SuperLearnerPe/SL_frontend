@@ -99,9 +99,9 @@ export default function Component() {
           email: volunteer.email,
           first_name: volunteer.name,
           last_name: volunteer.last_name,
-          is_superuser: volunteer.role === 1,
-          is_staff: volunteer.role === 1,
-          is_active: 1
+          // is_superuser: volunteer.role === 1,
+          // is_staff: volunteer.role === 1,
+          // is_active: 1
         },
         volunteer: {
           name: volunteer.name,

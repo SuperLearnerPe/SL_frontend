@@ -1,4 +1,4 @@
-const BASE_URL = "https://backend-superlearner-1083661745884.us-central1.run.app";
+const BASE_URL = import.meta.env.VITE_API_URL;
 
 // Helper function to get auth headers
 const getAuthHeaders = () => {
@@ -36,7 +36,7 @@ export const downloadManagementExcel = async (params) => {
       queryParams.append('tipo', 'completo');
     }
 
-    const url = `${BASE_URL}/metricas/gestion/excel/?${queryParams.toString()}`;
+    const url = `${BASE_URL}/metricas/management/excel/?${queryParams.toString()}`;
     
     const response = await fetch(url, {
       method: 'GET',

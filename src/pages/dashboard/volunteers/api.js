@@ -1,5 +1,5 @@
 // api.js
-const BASE_URL = 'https://backend-superlearner-1083661745884.us-central1.run.app/volunteers/teachers';
+const BASE_URL = import.meta.env.VITE_API_URL;
 
 const getHeaders = () => {
   const token = localStorage.getItem('access_token');
@@ -11,7 +11,7 @@ const getHeaders = () => {
 };
 
 export const getVolunteers = async () => {
-  const response = await fetch(`${BASE_URL}/Get_Volunteers/`, {
+  const response = await fetch(`${BASE_URL}/volunteers/teachers/Get_Volunteers/`, {
     method: 'GET',
     headers: getHeaders(),
   });
@@ -20,8 +20,9 @@ export const getVolunteers = async () => {
 };
 
 export const updateVolunteer = async (volunteerData) => {
+  console.log('updateVolunteer payload:', JSON.stringify(volunteerData));
   try {
-    const response = await fetch(`${BASE_URL}/update_volunteer/`, {
+    const response = await fetch(`${BASE_URL}/volunteers/teachers/update_volunteer/`, {
       method: 'PUT',
       headers: getHeaders(),
       body: JSON.stringify(volunteerData),
@@ -29,7 +30,8 @@ export const updateVolunteer = async (volunteerData) => {
     
     // Obtener el texto de la respuesta primero
     const responseText = await response.text();
-    
+    console.log('updateVolunteer response:', responseText);
+
     // Si la respuesta está vacía o es "success", consideramos que la operación fue exitosa
     if (!responseText || responseText.includes("success")) {
       // Si el API devuelve una respuesta vacía pero con status OK, creamos un objeto con los datos enviados
@@ -62,7 +64,7 @@ export const updateVolunteer = async (volunteerData) => {
 
 export const createVolunteer = async (volunteerData) => {
 
-  const response = await fetch(`${BASE_URL}/create_volunteer/`, {
+  const response = await fetch(`${BASE_URL}/volunteers/teachers/create_volunteer/`, {
     method: 'POST',
     headers: getHeaders(),
     body: JSON.stringify(volunteerData),
@@ -79,7 +81,7 @@ export const createVolunteer = async (volunteerData) => {
 
 
 export const disableVolunteer = async (volunteerId) => {
-  const response = await fetch(`${BASE_URL}/disable_volunteer/`, {
+  const response = await fetch(`${BASE_URL}/volunteers/teachers/disable_volunteer/`, {
     method: 'PATCH',
     headers: getHeaders(),
     body: JSON.stringify({ volunteer_id: volunteerId }),
@@ -89,7 +91,7 @@ export const disableVolunteer = async (volunteerId) => {
 };
 
 export const enableVolunteer = async (volunteerId) => {
-  const response = await fetch(`${BASE_URL}/enable_volunteer/`, {
+  const response = await fetch(`${BASE_URL}/volunteers/teachers/enable_volunteer/`, {
     method: 'PATCH',
     headers: getHeaders(),
     body: JSON.stringify({ volunteer_id: volunteerId }),
