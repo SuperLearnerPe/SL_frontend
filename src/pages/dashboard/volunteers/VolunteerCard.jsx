@@ -18,12 +18,21 @@ export default function VolunteerCard({ volunteer, onEdit, onToggleStatus, cours
     ? courses.filter(course => volunteer.course_ids.includes(course.id))
     : [];
 
+  // Generar URL del avatar con cache busting
+  const getAvatarUrl = () => {
+    if (volunteer.avatar_url) {
+      const timestamp = volunteer.avatar_updated_at || Date.now();
+      return `${volunteer.avatar_url}?v=${encodeURIComponent(timestamp)}`;
+    }
+    return '/placeholder.svg';
+  };
+
   return (
     <Card elevation={3}>
       <CardContent>
         <Box display="flex" justifyContent="center" mb={2}>
           <Avatar
-            src={volunteer.photo || '/placeholder.svg'}
+            src={getAvatarUrl()}
             alt={`${volunteer.name} ${volunteer.last_name}`}
             sx={{ width: 100, height: 100 }}
           />

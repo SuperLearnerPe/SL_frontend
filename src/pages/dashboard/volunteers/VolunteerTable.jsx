@@ -17,6 +17,15 @@ export default function VolunteerTable({ volunteers, onEdit, onToggleStatus, cou
     setSelectedVolunteer(null);
   };
 
+  // Generar URL del avatar con cache busting
+  const getAvatarUrl = (volunteer) => {
+    if (volunteer.avatar_url) {
+      const timestamp = volunteer.avatar_updated_at || Date.now();
+      return `${volunteer.avatar_url}?v=${encodeURIComponent(timestamp)}`;
+    }
+    return '/placeholder.svg';
+  };
+
   return (
     <>
       <Table>
@@ -43,7 +52,7 @@ export default function VolunteerTable({ volunteers, onEdit, onToggleStatus, cou
             return (
               <TableRow key={volunteer.id}>
                 <TableCell>
-                  <Avatar src={volunteer.photo || '/placeholder.svg'} alt={`${volunteer.name} ${volunteer.last_name}`} />
+                  <Avatar src={getAvatarUrl(volunteer)} alt={`${volunteer.name} ${volunteer.last_name}`} />
                 </TableCell>
                 <TableCell>{`${volunteer.name} ${volunteer.last_name}`}</TableCell>
                 <TableCell>{volunteer.email}</TableCell>

@@ -45,8 +45,8 @@ const ProfileDialog = ({ open, onClose, userData }) => {
   const [profileData, setProfileData] = useState({});
 
   useEffect(() => {
-    if (userData && userData.length > 0) {
-      setProfileData(userData[0]);
+    if (userData) {
+      setProfileData(userData);
     }
   }, [userData]);
 
@@ -58,11 +58,20 @@ const ProfileDialog = ({ open, onClose, userData }) => {
     return <Icon fontSize="small" />;
   };
 
+  // Generar URL del avatar con cache busting
+  const getAvatarUrl = () => {
+    if (profileData.avatar_url) {
+      const timestamp = profileData.avatar_updated_at || Date.now();
+      return `${profileData.avatar_url}?v=${encodeURIComponent(timestamp)}`;
+    }
+    return profileData.photo || '/placeholder.svg';
+  };
+
   return (
     <StyledDialog open={open} onClose={onClose} maxWidth="xs" fullWidth>
       <StyledCard>
         <DialogTitle>
-          <Typography variant="h5" align="center" fontWeight="bold" color="primary">
+          <Typography variant="h5" component="div" align="center" fontWeight="bold" color="primary">
             Perfil
           </Typography>
         </DialogTitle>
@@ -71,7 +80,7 @@ const ProfileDialog = ({ open, onClose, userData }) => {
             <Grid item xs={12} style={{ textAlign: 'center' }}>
               <Avatar
                 alt={profileData.name}
-                src={profileData.photo}
+                src={getAvatarUrl()}
                 sx={{ width: 100, height: 100, margin: 'auto', border: '4px solid #BBDEFB' }}
               />
             </Grid>

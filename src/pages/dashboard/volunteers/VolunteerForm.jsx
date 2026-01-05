@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Dialog, DialogTitle, DialogContent, DialogActions, Button, Grid, TextField, FormControl, InputLabel, Select, MenuItem, Typography, Autocomplete } from '@mui/material';
+import { Dialog, DialogTitle, DialogContent, DialogActions, Button, Grid, TextField, FormControl, InputLabel, Select, MenuItem, Typography, Autocomplete, Box, Avatar } from '@mui/material';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFnsV3';
 import { LocalizationProvider, DatePicker } from '@mui/x-date-pickers';
 import { es } from 'date-fns/locale';
 import { isValid, parseISO } from 'date-fns';
 import countryList from 'react-select-country-list';
 import { getCourses } from './api';
+import { CloudUploadOutlined, DeleteOutlined } from '@ant-design/icons';
 
 export default function VolunteerForm({ open, onClose, onSave, volunteer, setVolunteer }) {
   const [errors, setErrors] = useState({});
@@ -13,6 +14,9 @@ export default function VolunteerForm({ open, onClose, onSave, volunteer, setVol
   const [isSaving, setIsSaving] = useState(false);
   const [courses, setCourses] = useState([]);
   const [loadingCourses, setLoadingCourses] = useState(false);
+  const [avatarPreview, setAvatarPreview] = useState(null);
+  const [avatarFile, setAvatarFile] = useState(null);
+  const [removeAvatar, setRemoveAvatar] = useState(false);
   
   // Obtener la lista completa de países usando useMemo para optimizar
   const countries = useMemo(() => countryList().getData(), []);
@@ -27,6 +31,18 @@ export default function VolunteerForm({ open, onClose, onSave, volunteer, setVol
       if (isTeacher) {
         fetchCourses();
       }
+      
+      // Cargar preview del avatar si existe
+      if (volunteer?.avatar_url) {
+        const avatarUrlWithCache = `${volunteer.avatar_url}?v=${encodeURIComponent(volunteer.avatar_updated_at || Date.now())}`;
+        setAvatarPreview(avatarUrlWithCache);
+      } else {
+        setAvatarPreview(null);
+      }
+      
+      // Resetear archivo y flag de eliminación al abrir el formulario
+      setAvatarFile(null);
+      setRemoveAvatar(false);
     }
   }, [open, volunteer]);
 
@@ -125,8 +141,64 @@ export default function VolunteerForm({ open, onClose, onSave, volunteer, setVol
 
   const handleSave = () => {
     setIsSaving(true);
-    onSave(volunteer).finally(() => {
+    // Añadir el archivo avatar y la bandera de eliminación al objeto volunteer antes de guardar
+    const volunteerWithAvatar = { ...volunteer, avatarFile, removeAvatar };
+    onSave(volunteerWithAvatar).finally(() => {
       setIsSaving(false);
+    });
+  };
+  
+  const handleAvatarChange = (event) => {
+    const file = event.target.files[0];
+    
+    if (file) {
+      // Validar tipo de archivo
+      const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
+      if (!allowedTypes.includes(file.type)) {
+        setErrors(prev => ({ 
+          ...prev, 
+          avatar: 'Solo se permiten archivos JPG, PNG o WEBP' 
+        }));
+        return;
+      }
+      
+      // Validar tamaño (1MB máximo)
+      const maxSize = 1 * 1024 * 1024; // 1MB
+      if (file.size > maxSize) {
+        setErrors(prev => ({ 
+          ...prev, 
+          avatar: `Archivo muy grande. Máximo 1MB. Tamaño actual: ${(file.size / (1024 * 1024)).toFixed(2)}MB` 
+        }));
+        return;
+      }
+      
+      // Limpiar error si existía
+      setErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors.avatar;
+        return newErrors;
+      });
+      
+      // Guardar el archivo
+      setAvatarFile(file);
+      
+      // Crear preview local
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setAvatarPreview(reader.result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+  
+  const handleRemoveAvatar = () => {
+    setAvatarFile(null);
+    setAvatarPreview(null);
+    setRemoveAvatar(true); // Marcar para eliminación en el backend
+    setErrors(prev => {
+      const newErrors = { ...prev };
+      delete newErrors.avatar;
+      return newErrors;
     });
   };
 
@@ -333,14 +405,53 @@ export default function VolunteerForm({ open, onClose, onSave, volunteer, setVol
             </Grid>
           )}
           <Grid item xs={12}>
-            <TextField
-              name="photo"
-              label="URL de la Foto"
-              fullWidth
-              variant="outlined"
-              value={volunteer.photo || ''}
-              onChange={handleChange}
-            />
+            <Box>
+              <Typography variant="subtitle1" gutterBottom>
+                Foto de Perfil
+              </Typography>
+              
+              {avatarPreview && (
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
+                  <Avatar
+                    src={avatarPreview}
+                    sx={{ width: 100, height: 100 }}
+                  />
+                  <Button
+                    variant="outlined"
+                    color="error"
+                    startIcon={<DeleteOutlined />}
+                    onClick={handleRemoveAvatar}
+                  >
+                    Eliminar Foto
+                  </Button>
+                </Box>
+              )}
+              
+              <Button
+                variant="outlined"
+                component="label"
+                startIcon={<CloudUploadOutlined />}
+                fullWidth
+              >
+                {avatarPreview ? 'Cambiar Foto' : 'Subir Foto'}
+                <input
+                  type="file"
+                  hidden
+                  accept="image/png,image/jpeg,image/webp"
+                  onChange={handleAvatarChange}
+                />
+              </Button>
+              
+              {errors.avatar && (
+                <Typography color="error" variant="caption" sx={{ mt: 1, display: 'block' }}>
+                  {errors.avatar}
+                </Typography>
+              )}
+              
+              <Typography variant="caption" color="textSecondary" sx={{ mt: 1, display: 'block' }}>
+                Formatos permitidos: JPG, PNG, WEBP. Tamaño máximo: 1MB
+              </Typography>
+            </Box>
           </Grid>
         </Grid>
       </DialogContent>

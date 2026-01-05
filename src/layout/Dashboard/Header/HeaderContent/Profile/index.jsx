@@ -1,5 +1,5 @@
 import { useRef, useState, useEffect } from 'react';
-import axios from 'axios';
+import { useUser } from 'context/UserContext';
 
 import { useTheme } from '@mui/material/styles';
 import ButtonBase from '@mui/material/ButtonBase';
@@ -35,36 +35,8 @@ export default function Profile() {
   const [openProfileDialog, setOpenProfileDialog] = useState(false);
   const [openSupportDialog, setOpenSupportDialog] = useState(false);
 
-  const [userData, setUserData] = useState(null);
-
-  useEffect(() => {
-    const fetchUserData = async () => {
-      try {
-        const id_user = localStorage.getItem('id');
-        const token = localStorage.getItem('access_token');
-
-        const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/user/`, {
-          params: { id_user },
-          headers: {
-            Accept: '*/*',
-            Authorization: `Token ${token}`,
-            'Content-Type': 'application/json'
-          },
-          withCredentials: true
-        });
-
-        if (response.data.length > 0) {
-          setUserData(response.data);
-        } else {
-          console.error('No user data found');
-        }
-      } catch (error) {
-        console.error('Error fetching user data:', error);
-      }
-    };
-
-    fetchUserData();
-  }, []);
+  // Usar datos del contexto en lugar de hacer fetch local
+  const { userData } = useUser();
 
   const handleToggle = () => {
     setOpen((prevOpen) => !prevOpen);
@@ -97,6 +69,18 @@ export default function Profile() {
 
   const iconBackColorOpen = 'grey.100';
 
+  // Generar URL del avatar con cache busting
+  const getAvatarUrl = () => {
+    if (userData) {
+      if (userData.avatar_url) {
+        const timestamp = userData.avatar_updated_at || Date.now();
+        return `${userData.avatar_url}?v=${encodeURIComponent(timestamp)}`;
+      }
+      return userData.photo || avatar1;
+    }
+    return avatar1;
+  };
+
   return (
     <Box sx={{ flexShrink: 0, ml: 0.75 }}>
       <ButtonBase
@@ -114,9 +98,9 @@ export default function Profile() {
         onClick={handleToggle}
       >
         <Stack direction="row" spacing={1.25} alignItems="center" sx={{ p: 0.5 }}>
-          <Avatar alt="profile user" src={userData && userData[0] ? userData[0].photo : avatar1} size="sm" sx={{ width: 32, height: 32 }} />
+          <Avatar alt="profile user" src={getAvatarUrl()} size="sm" sx={{ width: 32, height: 32 }} />
           <Typography variant="subtitle1" sx={{ textTransform: 'capitalize' }}>
-            {userData && userData[0] ? `${userData[0].name} ${userData[0].last_name}` : 'Usuario'}
+            {userData ? `${userData.name} ${userData.last_name}` : 'Usuario'}
           </Typography>
         </Stack>
       </ButtonBase>
@@ -149,15 +133,15 @@ export default function Profile() {
                         <Stack direction="row" spacing={1.25} alignItems="center">
                           <Avatar
                             alt="profile user"
-                            src={userData && userData[0] ? userData[0].photo : avatar1}
+                            src={getAvatarUrl()}
                             sx={{ width: 32, height: 32 }}
                           />
                           <Stack>
                             <Typography variant="h6">
-                              {userData && userData[0] ? `${userData[0].name} ${userData[0].last_name}` : 'Usuario'}
+                              {userData ? `${userData.name} ${userData.last_name}` : 'Usuario'}
                             </Typography>
                             <Typography variant="body2" color="text.secondary">
-                              {userData && userData[0] ? userData[0].email : 'correo@ejemplo.com'}
+                              {userData ? userData.email : 'correo@ejemplo.com'}
                             </Typography>
                           </Stack>
                         </Stack>

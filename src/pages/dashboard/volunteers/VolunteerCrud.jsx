@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Container, Paper } from '@mui/material';
+import { useUser } from 'context/UserContext';
 import VolunteerList from './VolunteerList';
 import VolunteerForm from './VolunteerForm';
 import SearchAndFilterBar from './SearchAndFilterBar';
@@ -8,6 +9,7 @@ import CustomSnackbar from './CustomSnackbar';
 import { getVolunteers, updateVolunteer, createVolunteer, disableVolunteer, enableVolunteer, getCourses } from './api';
 
 export default function Component() {
+  const { refreshUserData } = useUser(); // Para refrescar datos del usuario después de actualizar
   const [volunteers, setVolunteers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [viewMode, setViewMode] = useState('card');
@@ -102,44 +104,56 @@ export default function Component() {
 
   const handleSave = async (volunteer) => {
     try {
-      setIsSaving(true); // Si no existe, agrega esta línea
+      setIsSaving(true);
 
-      const commonData = {
-        user: {
-          username: volunteer.name,
-          email: volunteer.email,
-          first_name: volunteer.name,
-          last_name: volunteer.last_name
-          // is_superuser: volunteer.role === 1,
-          // is_staff: volunteer.role === 1,
-          // is_active: 1
-        },
-        volunteer: {
-          name: volunteer.name,
-          last_name: volunteer.last_name,
-          personal_email: volunteer.personal_email,
-          phone: volunteer.phone,
-          nationality: volunteer.nationality,
-          document_type: volunteer.document_type,
-          document_id: volunteer.document_id,
-          birthdate: volunteer.birthdate,
-          gender: volunteer.gender,
-          status: volunteer.status,
-          photo: volunteer.photo || '',
-          role: volunteer.role
-        },
-        course_ids: volunteer.role === 2 ? volunteer.course_ids : []
+      // Crear FormData para soportar subida de archivos
+      const formData = new FormData();
+      
+      // Datos del usuario
+      const userData = {
+        username: volunteer.name,
+        email: volunteer.email,
+        first_name: volunteer.name,
+        last_name: volunteer.last_name
       };
+      
+      // Datos del voluntario
+      const volunteerData = {
+        name: volunteer.name,
+        last_name: volunteer.last_name,
+        personal_email: volunteer.personal_email,
+        phone: volunteer.phone,
+        nationality: volunteer.nationality,
+        document_type: volunteer.document_type,
+        document_id: volunteer.document_id,
+        birthdate: volunteer.birthdate,
+        gender: volunteer.gender,
+        status: volunteer.status,
+        role: volunteer.role
+      };
+      
+      const courseIds = volunteer.role === 2 ? volunteer.course_ids : [];
 
       if (volunteer.id) {
-        const updatedData = {
-          volunteer_id: volunteer.id,
-          user_id: volunteer.user,
-          ...commonData
-        };
+        // Actualizar voluntario existente
+        formData.append('volunteer_id', volunteer.id);
+        formData.append('user_id', volunteer.user);
+        formData.append('user', JSON.stringify(userData));
+        formData.append('volunteer', JSON.stringify(volunteerData));
+        formData.append('course_ids', JSON.stringify(courseIds));
+        
+        // Agregar avatar si existe
+        if (volunteer.avatarFile) {
+          formData.append('avatar', volunteer.avatarFile);
+        }
+        
+        // Agregar flag para eliminar avatar si se marcó
+        if (volunteer.removeAvatar) {
+          formData.append('remove_avatar', 'true');
+        }
 
         try {
-          const updatedVolunteer = await updateVolunteer(updatedData);
+          const updatedVolunteer = await updateVolunteer(formData);
 
           setVolunteers(
             volunteers.map((v) =>
@@ -152,6 +166,12 @@ export default function Component() {
             )
           );
 
+          // Si el voluntario actualizado es el usuario actual, refrescar contexto
+          const currentUserId = localStorage.getItem('id');
+          if (volunteer.user && volunteer.user == currentUserId) {
+            refreshUserData();
+          }
+
           setSnackbar({ open: true, message: 'Voluntario actualizado con éxito', severity: 'success' });
           setOpenDialog(false);
         } catch (error) {
@@ -159,7 +179,6 @@ export default function Component() {
 
           // Si el error es de comunicación pero probablemente se procesó correctamente
           if (error.message === 'Failed to fetch' || error.message === 'NetworkError') {
-            // Actualizamos la UI como si fuera exitoso
             setVolunteers(
               volunteers.map((v) =>
                 v.id === volunteer.id
@@ -172,20 +191,23 @@ export default function Component() {
             setSnackbar({ open: true, message: 'Voluntario actualizado con éxito', severity: 'success' });
             setOpenDialog(false);
           } else {
-            throw error; // Propagamos otros errores
+            throw error;
           }
         }
       } else {
-        // Código existente para crear voluntario
-        const newVolunteerData = {
-          ...commonData,
-          user: {
-            ...commonData.user,
-            password: generatePassword(volunteer)
-          }
-        };
+        // Crear nuevo voluntario
+        userData.password = generatePassword(volunteer);
+        
+        formData.append('user', JSON.stringify(userData));
+        formData.append('volunteer', JSON.stringify(volunteerData));
+        formData.append('course_ids', JSON.stringify(courseIds));
+        
+        // Agregar avatar si existe
+        if (volunteer.avatarFile) {
+          formData.append('avatar', volunteer.avatarFile);
+        }
 
-        const newVolunteer = await createVolunteer(newVolunteerData);
+        const newVolunteer = await createVolunteer(formData);
         setVolunteers([...volunteers, newVolunteer]);
         setSnackbar({ open: true, message: 'Voluntario añadido con éxito', severity: 'success' });
         setOpenDialog(false);
@@ -215,7 +237,8 @@ export default function Component() {
             phone: 'Teléfono',
             personal_email: 'Correo personal',
             role: 'Rol',
-            course_ids: 'Cursos'
+            course_ids: 'Cursos',
+            avatar: 'Foto de perfil'
           };
 
           const fieldName = fieldNames[firstField] || firstField;
@@ -227,7 +250,7 @@ export default function Component() {
 
       setSnackbar({ open: true, message: errorMessage, severity: 'error' });
     } finally {
-      setIsSaving(false); // Si no existe, agrega esta línea
+      setIsSaving(false);
     }
   };
 

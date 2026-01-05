@@ -31,7 +31,7 @@ import { useUser } from 'context/UserContext';
 export default function AuthLogin({ isDemo = false }) {
   const [showPassword, setShowPassword] = React.useState(false);
   const navigate = useNavigate();
-  const { setRole } = useUser();
+  const { setRole, refreshUserData } = useUser();
 
   const handleClickShowPassword = () => {
     setShowPassword(!showPassword);
@@ -80,6 +80,9 @@ export default function AuthLogin({ isDemo = false }) {
 
       // Update the role in the context
       setRole(role.toString());
+
+      // Cargar datos del usuario después del login
+      refreshUserData();
 
       Swal.fire({
         title: 'Inicio de Sesión correcto',
