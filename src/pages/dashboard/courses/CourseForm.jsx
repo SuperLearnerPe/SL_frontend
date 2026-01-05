@@ -14,12 +14,10 @@ import {
 import CloseIcon from '@mui/icons-material/Close';
 
 const daysOfWeek = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
-const categories = ['Matemáticas', 'Inglés', 'Ciencias', 'Literatura', 'Historia', 'Arte', 'Música', 'Deportes', 'Tecnología', 'Otros'];
 
 export default function CourseForm({ open, onClose, onSave, initialCourse }) {
   const [formData, setFormData] = useState({
     name: '',
-    category: '',
     day: '',
     start_time: '',
     end_time: '',
@@ -33,7 +31,6 @@ export default function CourseForm({ open, onClose, onSave, initialCourse }) {
     if (initialCourse && Object.keys(initialCourse).length > 0) {
       setFormData({
         name: initialCourse.name || '',
-        category: initialCourse.category || '',
         day: initialCourse.day || '',
         start_time: initialCourse.start_time || '',
         end_time: initialCourse.end_time || '',
@@ -43,7 +40,6 @@ export default function CourseForm({ open, onClose, onSave, initialCourse }) {
     } else {
       setFormData({
         name: '',
-        category: '',
         day: '',
         start_time: '',
         end_time: '',
@@ -69,7 +65,6 @@ export default function CourseForm({ open, onClose, onSave, initialCourse }) {
   const validate = () => {
     const newErrors = {};
     if (!formData.name.trim()) newErrors.name = 'El nombre del curso es requerido';
-    if (!formData.category.trim()) newErrors.category = 'La categoría es requerida';
     if (!formData.day) newErrors.day = 'El día es requerido';
     if (!formData.start_time) newErrors.start_time = 'La hora de inicio es requerida';
     if (!formData.end_time) newErrors.end_time = 'La hora de fin es requerida';
@@ -93,7 +88,6 @@ export default function CourseForm({ open, onClose, onSave, initialCourse }) {
   const handleClose = () => {
     setFormData({
       name: '',
-      category: '',
       day: '',
       start_time: '',
       end_time: '',
@@ -127,25 +121,6 @@ export default function CourseForm({ open, onClose, onSave, initialCourse }) {
               helperText={errors.name}
               required
             />
-          </Grid>
-          <Grid item xs={12} sm={6}>
-            <TextField
-              fullWidth
-              select
-              label="Categoría"
-              name="category"
-              value={formData.category}
-              onChange={handleChange}
-              error={!!errors.category}
-              helperText={errors.category}
-              required
-            >
-              {categories.map((category) => (
-                <MenuItem key={category} value={category}>
-                  {category}
-                </MenuItem>
-              ))}
-            </TextField>
           </Grid>
           <Grid item xs={12} sm={6}>
             <TextField

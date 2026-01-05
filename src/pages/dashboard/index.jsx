@@ -168,7 +168,6 @@ export default function DashboardDefault() {
               <TableHead>
                 <TableRow>
                   <TableCell><strong>Nombre</strong></TableCell>
-                  <TableCell><strong>Categoría</strong></TableCell>
                   <TableCell><strong>Día</strong></TableCell>
                   <TableCell><strong>Horario</strong></TableCell>
                   <TableCell><strong>Estado</strong></TableCell>
@@ -190,7 +189,6 @@ export default function DashboardDefault() {
                         {course.name}
                       </Box>
                     </TableCell>
-                    <TableCell>{course.category || 'N/A'}</TableCell>
                     <TableCell>{course.day || 'N/A'}</TableCell>
                     <TableCell>
                       {course.start_time && course.end_time 
