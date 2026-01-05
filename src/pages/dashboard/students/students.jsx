@@ -84,15 +84,25 @@ const StudentCoursesManager = () => {
   // Obtener cursos disponibles (no asignados al estudiante)
   const getAvailableCourses = (studentId) => {
     const student = students.find((s) => s.id === studentId)
-    if (!student) return courses
-    return courses.filter((course) => !student.courses_info.some((c) => c.id === course.id))
+    if (!student || !student.courses) return courses
+    return courses.filter((course) => !student.courses.some((c) => c.class_id === course.id))
   }
 
   // Obtener cursos asignados al estudiante
   const getAssignedCourses = (studentId) => {
     const student = students.find((s) => s.id === studentId)
-    if (!student) return []
-    return student.courses_info
+    if (!student || !student.courses) return []
+    // Mapear la estructura del backend a la estructura esperada por el frontend
+    return student.courses.map(course => {
+      // Buscar información adicional del curso en la lista de cursos
+      const courseInfo = courses.find(c => c.id === course.class_id) || {}
+      return {
+        id: course.class_id,
+        name: course.course_name,
+        dia: courseInfo.dia || 'N/A',
+        horario: courseInfo.horario || 'N/A'
+      }
+    })
   }
 
   // Asignar cursos a estudiante

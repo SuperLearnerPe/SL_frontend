@@ -39,22 +39,24 @@ export default function Component() {
   };
 
   const handleAddEdit = (volunteer = null) => {
-    setCurrentVolunteer(volunteer || {
-      name: '',
-      last_name: '',
-      personal_email: '',
-      email: '',
-      phone: '',
-      photo: '',
-      nationality: '',
-      document_type: '',
-      document_id: '',
-      birthdate: '',
-      gender: '',
-      status: 1,
-      role: 0,
-      course_ids: []
-    });
+    setCurrentVolunteer(
+      volunteer || {
+        name: '',
+        last_name: '',
+        personal_email: '',
+        email: '',
+        phone: '',
+        photo: '',
+        nationality: '',
+        document_type: '',
+        document_id: '',
+        birthdate: '',
+        gender: '',
+        status: 1,
+        role: 0,
+        course_ids: []
+      }
+    );
     setOpenDialog(true);
   };
 
@@ -70,38 +72,35 @@ export default function Component() {
     try {
       const toggleFunction = volunteer.status ? disableVolunteer : enableVolunteer;
       await toggleFunction(volunteer.id);
-      const updatedVolunteers = volunteers.map(v => 
-        v.id === volunteer.id ? { ...v, status: !v.status } : v
-      );
+      const updatedVolunteers = volunteers.map((v) => (v.id === volunteer.id ? { ...v, status: !v.status } : v));
       setVolunteers(updatedVolunteers);
-      setSnackbar({ 
-        open: true, 
-        message: `Voluntario ${volunteer.status ? 'desactivado' : 'activado'} con éxito`, 
-        severity: 'success' 
+      setSnackbar({
+        open: true,
+        message: `Voluntario ${volunteer.status ? 'desactivado' : 'activado'} con éxito`,
+        severity: 'success'
       });
     } catch (error) {
-      setSnackbar({ 
-        open: true, 
-        message: `Error al ${volunteer.status ? 'desactivar' : 'activar'} voluntario`, 
-        severity: 'error' 
+      setSnackbar({
+        open: true,
+        message: `Error al ${volunteer.status ? 'desactivar' : 'activar'} voluntario`,
+        severity: 'error'
       });
     }
   };
 
-
   const handleSave = async (volunteer) => {
     try {
       setIsSaving(true); // Si no existe, agrega esta línea
-      
+
       const commonData = {
         user: {
           username: volunteer.name,
           email: volunteer.email,
           first_name: volunteer.name,
-          last_name: volunteer.last_name,
-          is_superuser: volunteer.role === 1,
-          is_staff: volunteer.role === 1,
-          is_active: 1
+          last_name: volunteer.last_name
+          // is_superuser: volunteer.role === 1,
+          // is_staff: volunteer.role === 1,
+          // is_active: 1
         },
         volunteer: {
           name: volunteer.name,
@@ -114,38 +113,50 @@ export default function Component() {
           birthdate: volunteer.birthdate,
           gender: volunteer.gender,
           status: volunteer.status,
-          photo: volunteer.photo || "",
+          photo: volunteer.photo || '',
           role: volunteer.role
         },
         course_ids: volunteer.role === 2 ? volunteer.course_ids : []
       };
-  
+
       if (volunteer.id) {
         const updatedData = {
           volunteer_id: volunteer.id,
           user_id: volunteer.user,
           ...commonData
         };
-        
+
         try {
           const updatedVolunteer = await updateVolunteer(updatedData);
-          
-          setVolunteers(volunteers.map(v => v.id === volunteer.id ? {
-            ...volunteer,
-            ...updatedVolunteer
-          } : v));
-          
+
+          setVolunteers(
+            volunteers.map((v) =>
+              v.id === volunteer.id
+                ? {
+                    ...volunteer,
+                    ...updatedVolunteer
+                  }
+                : v
+            )
+          );
+
           setSnackbar({ open: true, message: 'Voluntario actualizado con éxito', severity: 'success' });
           setOpenDialog(false);
         } catch (error) {
           console.error('Error específico al actualizar:', error);
-          
+
           // Si el error es de comunicación pero probablemente se procesó correctamente
           if (error.message === 'Failed to fetch' || error.message === 'NetworkError') {
             // Actualizamos la UI como si fuera exitoso
-            setVolunteers(volunteers.map(v => v.id === volunteer.id ? {
-              ...volunteer
-            } : v));
+            setVolunteers(
+              volunteers.map((v) =>
+                v.id === volunteer.id
+                  ? {
+                      ...volunteer
+                    }
+                  : v
+              )
+            );
             setSnackbar({ open: true, message: 'Voluntario actualizado con éxito', severity: 'success' });
             setOpenDialog(false);
           } else {
@@ -161,30 +172,61 @@ export default function Component() {
             password: generatePassword(volunteer)
           }
         };
-  
+
         const newVolunteer = await createVolunteer(newVolunteerData);
         setVolunteers([...volunteers, newVolunteer]);
         setSnackbar({ open: true, message: 'Voluntario añadido con éxito', severity: 'success' });
         setOpenDialog(false);
       }
-      
+
       // Recargar los voluntarios para asegurar datos actualizados
       fetchVolunteers();
     } catch (error) {
       console.error('Error al guardar voluntario:', error);
-      setSnackbar({ open: true, message: 'Error al guardar voluntario', severity: 'error' });
+
+      // Extraer mensajes de error específicos del backend
+      let errorMessage = 'Error al guardar voluntario';
+
+      if (error.details) {
+        // Buscar el primer campo con error y mostrar su mensaje
+        const errorFields = Object.keys(error.details);
+        if (errorFields.length > 0) {
+          const firstField = errorFields[0];
+          const fieldErrors = error.details[firstField];
+
+          // Traducir nombres de campos técnicos a español
+          const fieldNames = {
+            username: 'Nombre de usuario',
+            email: 'Correo electrónico',
+            document_id: 'Número de documento',
+            password: 'Contraseña',
+            phone: 'Teléfono',
+            personal_email: 'Correo personal',
+            role: 'Rol',
+            course_ids: 'Cursos'
+          };
+
+          const fieldName = fieldNames[firstField] || firstField;
+          const errorText = Array.isArray(fieldErrors) ? fieldErrors[0] : fieldErrors;
+
+          errorMessage = `${fieldName}: ${errorText}`;
+        }
+      }
+
+      setSnackbar({ open: true, message: errorMessage, severity: 'error' });
     } finally {
       setIsSaving(false); // Si no existe, agrega esta línea
     }
   };
 
-  const filteredVolunteers = volunteers.filter(volunteer =>
-    (volunteer?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-     volunteer?.last_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-     volunteer?.personal_email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-     volunteer?.email?.toLowerCase().includes(searchTerm.toLowerCase())) &&
-    (filterStatus === 'all' || volunteer?.status?.toString() === filterStatus) &&
-    (filterGender === 'all' || volunteer?.gender?.toLowerCase() === filterGender.toLowerCase())
+  const filteredVolunteers = volunteers.filter(
+    (volunteer) =>
+      (volunteer?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        volunteer?.last_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        volunteer?.personal_email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        volunteer?.email?.toLowerCase().includes(searchTerm.toLowerCase())) &&
+      (filterStatus === 'all' || volunteer?.status?.toString() === filterStatus) &&
+      (filterGender === 'all' || volunteer?.gender?.toLowerCase() === filterGender.toLowerCase())
   );
 
   const paginatedVolunteers = filteredVolunteers.slice((page - 1) * itemsPerPage, page * itemsPerPage);

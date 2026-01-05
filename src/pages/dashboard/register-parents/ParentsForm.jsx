@@ -278,10 +278,12 @@ const ParentsForm = ({ open, onClose, onSave, initialParent }) => {
       console.error("Error en el formulario:", error)
       setIsSubmitting(false)
 
-      // Mostrar mensaje de error
+      // Mostrar mensaje de error con formato mejorado
+      const errorMessage = error.message || "Hubo un problema al guardar. Por favor, inténtelo de nuevo.";
+      
       Swal.fire({
         title: "Error",
-        text: error.message || "Hubo un problema al guardar. Por favor, inténtelo de nuevo.",
+        html: errorMessage.replace(/\n/g, '<br>'),
         icon: "error",
         confirmButtonText: "Ok",
       })

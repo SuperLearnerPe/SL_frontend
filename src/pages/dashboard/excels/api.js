@@ -1,4 +1,4 @@
-const BASE_URL = "https://backend-superlearner-1083661745884.us-central1.run.app";
+const BASE_URL = import.meta.env.VITE_API_URL;
 
 // Helper function to get auth headers
 const getAuthHeaders = () => {
@@ -12,12 +12,9 @@ const getAuthHeaders = () => {
 /**
  * Downloads management metrics Excel report
  * @param {Object} params - Report parameters
- * @param {string} params.tipo - Type of report ('diario', 'semanal', 'mensual', 'completo')
- * @param {string} [params.fecha] - Specific date (for daily reports)
- * @param {string} [params.fecha_inicio] - Start date (for weekly reports)
- * @param {number} [params.mes] - Month number (for monthly reports)
- * @param {number} [params.anio] - Year (for monthly reports)
- * @param {number} [params.clase_id] - Class ID (optional filter)
+ * @param {string} params.tipo_reporte - Type of entity ('padres', 'estudiantes', 'voluntarios', 'cursos')
+ * @param {string} [params.fecha_inicio] - Optional start date (YYYY-MM-DD). If omitted, no start date filter is applied
+ * @param {string} [params.fecha_fin] - Optional end date (YYYY-MM-DD). If omitted, no end date filter is applied
  * @returns {Promise} - Promise that resolves to Blob for download
  */
 export const downloadManagementExcel = async (params) => {
@@ -30,13 +27,7 @@ export const downloadManagementExcel = async (params) => {
       }
     });
 
-    // Default tipo parameter if not provided
-    
-    if (!params.tipo) {
-      queryParams.append('tipo', 'completo');
-    }
-
-    const url = `${BASE_URL}/metricas/gestion/excel/?${queryParams.toString()}`;
+    const url = `${BASE_URL}/metricas/management/excel-entidades/?${queryParams.toString()}`;
     
     const response = await fetch(url, {
       method: 'GET',
@@ -44,7 +35,8 @@ export const downloadManagementExcel = async (params) => {
     });
 
     if (!response.ok) {
-      throw new Error('Error al descargar el reporte');
+      const errorData = await response.json().catch(() => ({ error: 'Error al descargar el reporte' }));
+      throw new Error(errorData.error || 'Error al descargar el reporte');
     }
 
     return await response.blob();

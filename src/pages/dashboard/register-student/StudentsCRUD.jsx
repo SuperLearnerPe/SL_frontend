@@ -67,10 +67,11 @@ export default function StudentCRUD() {
     try {
       if (student.id) {
         console.log("Actualizando estudiante con ID:", student.id)
-        // Incluir todos los campos editables incluyendo document_id
+        // Incluir todos los campos editables incluyendo document_id y parent_dni
         const updateData = {
           name: student.name,
           last_name: student.last_name,
+          parent_dni: student.parent_dni,
           gender: student.gender,
           nationality: student.nationality || "",
           document_id: student.document_id,
@@ -115,9 +116,11 @@ export default function StudentCRUD() {
       }
     } catch (error) {
       console.error("Error al guardar estudiante:", error)
+      const errorMessage = error.message || "Error al guardar estudiante. Por favor, inténtelo de nuevo.";
+      
       Swal.fire({
         title: "Error",
-        text: "Error al guardar estudiante. Por favor, inténtelo de nuevo.",
+        html: errorMessage.replace(/\n/g, '<br>'),
         icon: "error",
         confirmButtonText: "Ok",
       })

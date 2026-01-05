@@ -1,4 +1,22 @@
-const BASE_URL = "https://backend-superlearner-1083661745884.us-central1.run.app"
+const BASE_URL = import.meta.env.VITE_API_URL;
+
+// Función para traducir nombres de campos al español
+const translateFieldName = (fieldName) => {
+  const translations = {
+    'document_id': 'DNI del estudiante',
+    'parent_dni': 'DNI del padre/madre',
+    'name': 'Nombre',
+    'last_name': 'Apellido',
+    'nationality': 'Nacionalidad',
+    'birthdate': 'Fecha de nacimiento',
+    'gender': 'Género',
+    'birth_city': 'Ciudad de nacimiento',
+    'birth_country': 'País de nacimiento',
+    'email': 'Email',
+    'detail': 'Detalle',
+  };
+  return translations[fieldName] || fieldName;
+};
 
 // Función helper para obtener el token
 const getAuthHeaders = () => {
@@ -11,7 +29,7 @@ const getAuthHeaders = () => {
 
 export const getStudents = async (page = 1, pageSize = 10) => {
   try {
-    const response = await fetch(`${BASE_URL}/api/students/get/?page=${page}&pageSize=${pageSize}`, {
+    const response = await fetch(`${BASE_URL}/api/students/?page=${page}&pageSize=${pageSize}`, {
       method: 'GET',
       headers: getAuthHeaders()
     })
@@ -27,14 +45,20 @@ export const getStudents = async (page = 1, pageSize = 10) => {
 
 export const getStudentById = async (studentId) => {
   try {
-    const response = await fetch(`${BASE_URL}/api/students/get-id/?student_id=${studentId}`, {
+    const response = await fetch(`${BASE_URL}/api/students/${studentId}/`, {
       method: 'GET',
       headers: getAuthHeaders()
     })
+    
+    const data = await response.json()
+    
     if (!response.ok) {
-      throw new Error("Network response was not ok")
+      let errorMessage = "Error al obtener estudiante por ID";
+      if (data && data.detail) {
+        errorMessage = data.detail;
+      }
+      throw new Error(errorMessage)
     }
-    const data = await response.json()  
     return data
   } catch (error) {
     console.error("There was a problem fetching the student:", error)
@@ -62,22 +86,46 @@ export const createStudent = async (studentData) => {
 
     console.log("Creating student:", JSON.stringify(formattedData, null, 2))
 
-    const response = await fetch(`${BASE_URL}/api/students/create/`, {
+    const response = await fetch(`${BASE_URL}/api/students/`, {
       method: "POST",
       headers: getAuthHeaders(),
       body: JSON.stringify(formattedData),
     })
 
+    const data = await response.json()
+
     if (!response.ok) {
-      const errorData = await response.json()
-      console.error("Server error response:", errorData)
-      if (errorData.detail === "No existe un padre con el DNI proporcionado.") {
-        throw new Error("No existe un padre con el DNI proporcionado.")
+      console.error("Server error response:", data)
+      
+      // Extraer mensajes de error del backend
+      let errorMessage = "Error al crear el estudiante";
+      
+      if (data) {
+        // Si es el error específico del DNI del padre
+        if (data.detail) {
+          errorMessage = data.detail;
+        } 
+        // Si hay errores de validación de campos específicos
+        else if (typeof data === 'object' && !data.detail) {
+          const errorMessages = [];
+          for (const [field, messages] of Object.entries(data)) {
+            const fieldName = translateFieldName(field);
+            if (Array.isArray(messages)) {
+              errorMessages.push(`${fieldName}: ${messages.join(', ')}`);
+            } else if (typeof messages === 'string') {
+              errorMessages.push(`${fieldName}: ${messages}`);
+            }
+          }
+          if (errorMessages.length > 0) {
+            errorMessage = errorMessages.join('\n');
+          }
+        }
       }
-      throw new Error(errorData.detail || "Error al crear el estudiante")
+      
+      throw new Error(errorMessage)
     }
 
-    const responseData = await response.json()
+    const responseData = data
     const correctedData = {
       ...responseData,
       status: 1,
@@ -94,6 +142,7 @@ export const updateStudent = async (studentId, studentData) => {
     const formattedData = {
       name: studentData.name,
       last_name: studentData.last_name,
+      parent_dni: studentData.parent_dni,
       gender: studentData.gender,
       nationality: studentData.nationality || "",
       document_id: studentData.document_id,
@@ -108,19 +157,43 @@ export const updateStudent = async (studentId, studentData) => {
 
     console.log("Updating student with formatted data:", JSON.stringify(formattedData, null, 2))
 
-    const response = await fetch(`${BASE_URL}/api/students/update/?student_id=${studentId}`, {
-      method: "PUT",
+    const response = await fetch(`${BASE_URL}/api/students/${studentId}/`, {
+      method: "PATCH",
       headers: getAuthHeaders(),
       body: JSON.stringify(formattedData),
     })
 
+    const data = await response.json()
+
     if (!response.ok) {
-      const errorData = await response.json()
-      console.error("Server error response for update:", errorData)
-      throw new Error(errorData.detail || "Error al actualizar el estudiante")
+      console.error("Server error response for update:", data)
+      
+      // Extraer mensajes de error del backend
+      let errorMessage = "Error al actualizar el estudiante";
+      
+      if (data) {
+        if (data.detail) {
+          errorMessage = data.detail;
+        } else if (typeof data === 'object') {
+          const errorMessages = [];
+          for (const [field, messages] of Object.entries(data)) {
+            const fieldName = translateFieldName(field);
+            if (Array.isArray(messages)) {
+              errorMessages.push(`${fieldName}: ${messages.join(', ')}`);
+            } else if (typeof messages === 'string') {
+              errorMessages.push(`${fieldName}: ${messages}`);
+            }
+          }
+          if (errorMessages.length > 0) {
+            errorMessage = errorMessages.join('\n');
+          }
+        }
+      }
+      
+      throw new Error(errorMessage)
     }
 
-    const responseData = await response.json()
+    const responseData = data
     console.log("Update response:", responseData)
 
     const correctedData = {
@@ -138,9 +211,14 @@ export const toggleStudentStatus = async (studentId) => {
   try {
     console.log("Toggling status for student ID:", studentId)
     
-    const response = await fetch(`${BASE_URL}/api/students/toggle-status/?student_id=${studentId}`, {
-      method: "PUT",
+    // Primero obtener el estudiante actual para saber su status
+    const currentStudent = await getStudentById(studentId);
+    const newStatus = currentStudent.status === 1 ? 0 : 1;
+    
+    const response = await fetch(`${BASE_URL}/api/students/${studentId}/`, {
+      method: "PATCH",
       headers: getAuthHeaders(),
+      body: JSON.stringify({ status: newStatus })
     })
 
     const responseText = await response.text();
@@ -179,7 +257,7 @@ export const toggleStudentStatus = async (studentId) => {
 
 export const deleteStudent = async (studentId) => {
   try {
-    const response = await fetch(`${BASE_URL}/api/students/delete/?student_id=${studentId}`, {
+    const response = await fetch(`${BASE_URL}/api/students/${studentId}/`, {
       method: "DELETE",
       headers: getAuthHeaders(),
     })

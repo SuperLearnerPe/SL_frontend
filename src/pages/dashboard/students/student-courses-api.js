@@ -1,4 +1,4 @@
-const BASE_URL = "https://backend-superlearner-1083661745884.us-central1.run.app"
+const BASE_URL = import.meta.env.VITE_API_URL;
 
 // Función helper para obtener el token
 const getAuthHeaders = () => {
@@ -12,7 +12,7 @@ const getAuthHeaders = () => {
 // Obtener todos los estudiantes con sus cursos
 export const getAllStudentsWithCourses = async () => {
   try {
-    const response = await fetch(`${BASE_URL}/api/students/all-students-courses-info/`, {
+    const response = await fetch(`${BASE_URL}/api/students/`, {
       method: 'GET',
       headers: getAuthHeaders()
     })
@@ -32,10 +32,10 @@ export const getAllStudentsWithCourses = async () => {
 // Asignar múltiples cursos a un estudiante
 export const assignCoursesToStudent = async (studentId, classIds) => {
   try {
-    const body = JSON.stringify({ class_id: classIds })
+    const body = JSON.stringify({ course_ids: classIds })
     console.log("Enviando datos al endpoint de asignar cursos:", body)
 
-    const response = await fetch(`${BASE_URL}/api/students/assign-courses/?student_id=${studentId}`, {
+    const response = await fetch(`${BASE_URL}/api/students/${studentId}/courses/`, {
       method: 'POST',
       headers: getAuthHeaders(),
       body: body,
@@ -55,11 +55,11 @@ export const assignCoursesToStudent = async (studentId, classIds) => {
 // Remover múltiples cursos de un estudiante
 export const removeCoursesFromStudent = async (studentId, classIds) => {
   try {
-    const body = JSON.stringify({ class_id: classIds })
+    const body = JSON.stringify({ course_ids: classIds })
     console.log("Enviando datos al endpoint de remover cursos:", body)
 
-    const response = await fetch(`${BASE_URL}/api/students/remove-courses/?student_id=${studentId}`, {
-      method: 'POST',
+    const response = await fetch(`${BASE_URL}/api/students/${studentId}/courses/`, {
+      method: 'DELETE',
       headers: getAuthHeaders(),
       body: body,
     })

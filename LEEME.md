@@ -417,20 +417,22 @@ Controles para gestionar asistencia y exportar datos.
 
 #### Estudiantes
 
-- **Listar estudiantes**: `/api/students/get/`
-- **Crear estudiante**: `/api/students/create/`
-- **Detalles de estudiante**: `/api/students/get-id/`
-- **Actualizar estudiante**: `/api/students/update/`
-- **Cambiar estado**: `/api/students/toggle_status/`
-- **Estudiantes por sesión**: `/api/student/getStudents_by_session_class/`
+- **Listar estudiantes**: `/api/students/` (GET con parámetros opcionales `?page=1&pageSize=10`)
+- **Crear estudiante**: `/api/students/` (POST)
+- **Detalles de estudiante**: `/api/students/{id}/` (GET)
+- **Actualizar estudiante**: `/api/students/{id}/` (PUT - completo) o PATCH (parcial)
+- **Cambiar estado**: `/api/students/{id}/` (PATCH con `{status: 0 o 1}`)
+- **Asignar cursos**: `/api/students/{id}/courses/` (POST con `{course_ids: [1,2,3]}`)
+- **Remover cursos**: `/api/students/{id}/courses/` (DELETE con `{course_ids: [1,2,3]}`)
+- **Eliminar estudiante**: `/api/students/{id}/` (DELETE)
 
 #### Padres/Madres
 
-- **Listar padres**: `/api/parents/get/`
-- **Crear padre**: `/api/parents/create/`
-- **Detalles de padre**: `/api/parents/get-id/`
-- **Actualizar padre**: `/api/parents/update/`
-- **Cambiar estado**: `/api/parents/toggle_status/`
+- **Listar padres**: `/api/parents/` (GET)
+- **Crear padre**: `/api/parents/` (POST)
+- **Detalles de padre**: `/api/parents/{id}/` (GET)
+- **Actualizar padre**: `/api/parents/{id}/` (PUT)
+- **Cambiar estado**: `/api/parents/toggle-status/` (PUT con `?parent_id=`)
 
 #### Voluntarios
 

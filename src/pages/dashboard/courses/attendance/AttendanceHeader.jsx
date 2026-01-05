@@ -1,13 +1,13 @@
 import React from 'react';
 import { Box, Button, TextField, Typography, useMediaQuery, useTheme } from '@mui/material';
-import { Search as SearchIcon } from '@mui/icons-material';
+import { Search as SearchIcon, Add as AddIcon } from '@mui/icons-material';
 import ExcelJS from 'exceljs';
 import { saveAs } from 'file-saver';
 import TableViewIcon from '@mui/icons-material/TableView';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import InfoIcon from '@mui/icons-material/Info';
 
-export default function AttendanceHeader({ courseInfo, searchTerm, setSearchTerm, students, selectedOption, onMarkAllPresent, isModifying }) {
+export default function AttendanceHeader({ courseInfo, searchTerm, setSearchTerm, students, selectedOption, onMarkAllPresent, isModifying, onAddStudent }) {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
@@ -142,6 +142,21 @@ export default function AttendanceHeader({ courseInfo, searchTerm, setSearchTerm
           gap={2}
           width={isMobile ? '100%' : 'auto'}
         >
+          <Button
+            fullWidth={isMobile}
+            variant="outlined"
+            color="primary"
+            startIcon={<AddIcon />}
+            onClick={onAddStudent}
+            sx={{ 
+              py: 1.5,
+              px: 3,
+              fontSize: '0.9rem',
+              whiteSpace: 'nowrap'
+            }}
+          >
+            Agregar Alumno
+          </Button>
           <Button
             fullWidth={isMobile}
             variant="contained"

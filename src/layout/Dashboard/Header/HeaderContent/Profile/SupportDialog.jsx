@@ -20,13 +20,13 @@ const StyledDialog = styled(Dialog)(({ theme }) => ({
   '& .MuiDialog-paper': {
     borderRadius: '24px',
     backgroundColor: '#E3F2FD', // Fondo celeste claro
-    overflow: 'hidden',
-  },
+    overflow: 'hidden'
+  }
 }));
 
 const StyledCard = styled(Box)(({ theme }) => ({
   padding: theme.spacing(2),
-  color: theme.palette.text.primary,
+  color: theme.palette.text.primary
 }));
 
 const StyledChip = styled(Box)(({ theme }) => ({
@@ -40,8 +40,8 @@ const StyledChip = styled(Box)(({ theme }) => ({
   '& .MuiSvgIcon-root': {
     marginRight: theme.spacing(1),
     marginTop: '4px',
-    color: theme.palette.primary.main,
-  },
+    color: theme.palette.primary.main
+  }
 }));
 
 const SupportDialog = ({ open, onClose }) => {
@@ -52,9 +52,9 @@ const SupportDialog = ({ open, onClose }) => {
   const getHeaders = () => {
     const token = localStorage.getItem('access_token');
     return {
-      'Accept': '*/*',
-      'Authorization': `Token ${token}`,
-      'Content-Type': 'application/json',
+      Accept: '*/*',
+      Authorization: `Token ${token}`,
+      'Content-Type': 'application/json'
     };
   };
 
@@ -64,19 +64,19 @@ const SupportDialog = ({ open, onClose }) => {
     setLoading(true);
     const data = {
       subject: formData.subject,
-      description: formData.details,
+      description: formData.details
     };
 
     try {
-      const response = await fetch('https://backend-superlearner-1083661745884.us-central1.run.app/api/suport/send_support/', {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/suport/send_support/`, {
         method: 'POST',
         headers: getHeaders(),
-        body: JSON.stringify(data),
+        body: JSON.stringify(data)
       });
 
       if (response.ok) {
         const result = await response.json();
-        
+
         setSnackbar({
           open: true,
           message: 'Reclamo enviado con éxito',
@@ -152,16 +152,16 @@ const SupportDialog = ({ open, onClose }) => {
             <Button onClick={onClose} variant="outlined" color="primary" sx={{ borderRadius: '20px' }}>
               Cancelar
             </Button>
-            <IconButton 
-              onClick={handleSubmit} 
-              size="large" 
-              sx={{ 
-                bgcolor: theme => theme.palette.primary.main, 
+            <IconButton
+              onClick={handleSubmit}
+              size="large"
+              sx={{
+                bgcolor: (theme) => theme.palette.primary.main,
                 color: 'white',
                 '&:hover': {
-                  bgcolor: theme => theme.palette.primary.dark,
+                  bgcolor: (theme) => theme.palette.primary.dark
                 },
-                borderRadius: '50%',
+                borderRadius: '50%'
               }}
               disabled={loading} // Desactiva el botón mientras se envía
             >
