@@ -25,7 +25,7 @@ export default function CourseCard({ courseId, courseName, day, time, initialCol
     const token = localStorage.getItem('access_token');
     try {
       const response = await axios.post(
-        `${API_URL}/api/class/update_color/`,
+        `${API_URL}/api/course/update_color/`,
         {
           class_id: courseId,
           color: color

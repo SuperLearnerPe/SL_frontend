@@ -30,7 +30,7 @@ import {
 } from '@ant-design/icons';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import { downloadManagementExcel, downloadImpactExcel } from './api';
+import { downloadManagementExcel } from './api';
 import axios from 'axios';
 
 // Helper function to format dates for API
@@ -149,56 +149,57 @@ function ReportCard({ report, onDownload }) {
 // Management Report Dialog
 function ManagementReportDialog({ open, onClose, onDownload }) {
   const [loading, setLoading] = useState(false);
-  const [reportType, setReportType] = useState('completo');
-  const [specificDate, setSpecificDate] = useState('');
+  const [reportType, setReportType] = useState('estudiantes');
   const [startDate, setStartDate] = useState('');
-  const [month, setMonth] = useState('');
-  const [year, setYear] = useState(new Date().getFullYear());
-  const [classId, setClassId] = useState('');
-
-  // Array estático de cursos
-  const courses = [
-    { id: 1, name: "Inglés 5 - 7", dia: "Tuesday", horario: "2:30 pm - 4:30 pm" },
-    { id: 2, name: "Biblioteca", dia: "Monday", horario: "2:30 pm - 4:30 pm" },
-    { id: 3, name: "Arte", dia: "Wednesday", horario: "2:30 pm - 4:30 pm" },
-    { id: 4, name: "Lectura y escritura", dia: "Thursday", horario: "2:30 pm - 4:30 pm" },
-    { id: 5, name: "Juegos y deportes en la loza", dia: "Friday", horario: "2:30 pm - 4:30 pm" },
-    { id: 6, name: "Inglés 8 - 12", dia: "Saturday", horario: "3:00 pm - 5:00 pm" },
-    { id: 7, name: "Música", dia: "Sunday", horario: "2:00 pm - 4:00 pm" },
-    { id: 8, name: "Matemáticas", dia: "Saturday", horario: "10:00 am - 12:00 pm" },
-  ];
+  const [endDate, setEndDate] = useState('');
 
   const handleSubmit = async () => {
+    // Validar que al menos se haya seleccionado un tipo de reporte
+    if (!reportType) {
+      toast.error('Por favor, seleccione un tipo de reporte');
+      return;
+    }
+    
+    // Validar que si hay ambas fechas, fecha inicio sea menor que fecha fin
+    if (startDate && endDate && new Date(startDate) > new Date(endDate)) {
+      toast.error('La fecha de inicio debe ser anterior a la fecha de fin');
+      return;
+    }
+    
     try {
       setLoading(true);
       
       const params = {
-        tipo: reportType,
-        clase_id: classId || undefined
+        tipo_reporte: reportType
       };
       
-      // Add parameters based on report type
-      if (reportType === 'diario' && specificDate) {
-        params.fecha = formatDateForAPI(specificDate);
-      } else if (reportType === 'semanal' && startDate) {
-        params.fecha_inicio = formatDateForAPI(startDate);
-      } else if (reportType === 'mensual') {
-        params.mes = month;
-        params.anio = year;
+      // Solo agregar las fechas si están definidas
+      if (startDate) {
+        params.fecha_inicio = startDate;
+      }
+      if (endDate) {
+        params.fecha_fin = endDate;
       }
       
       const blob = await downloadManagementExcel(params);
       
       // Generate appropriate filename
-      let filename = 'Reporte_Gestion_';
-      if (reportType === 'diario') {
-        filename += `Diario_${params.fecha || 'SinFecha'}.xlsx`;
-      } else if (reportType === 'semanal') {
-        filename += `Semanal_${params.fecha_inicio || 'SinFecha'}.xlsx`;
-      } else if (reportType === 'mensual') {
-        filename += `Mensual_${params.mes}_${params.anio}.xlsx`;
+      const tipoNombres = {
+        'padres': 'Padres',
+        'estudiantes': 'Estudiantes',
+        'voluntarios': 'Voluntarios',
+        'cursos': 'Cursos'
+      };
+      
+      let filename;
+      if (startDate && endDate) {
+        filename = `Reporte_${tipoNombres[reportType]}_${startDate}_a_${endDate}.xlsx`;
+      } else if (startDate) {
+        filename = `Reporte_${tipoNombres[reportType]}_desde_${startDate}.xlsx`;
+      } else if (endDate) {
+        filename = `Reporte_${tipoNombres[reportType]}_hasta_${endDate}.xlsx`;
       } else {
-        filename += `Completo_${getCurrentDate()}.xlsx`;
+        filename = `Reporte_${tipoNombres[reportType]}_completo.xlsx`;
       }
       
       downloadBlob(blob, filename);
@@ -230,87 +231,39 @@ function ManagementReportDialog({ open, onClose, onDownload }) {
               onChange={(e) => setReportType(e.target.value)}
               label="Tipo de Reporte"
             >
-              <MenuItem value="completo">Reporte Completo</MenuItem>
-              <MenuItem value="diario">Reporte Diario</MenuItem>
-              <MenuItem value="semanal">Reporte Semanal</MenuItem>
-              <MenuItem value="mensual">Reporte Mensual</MenuItem>
+              <MenuItem value="padres">Padres</MenuItem>
+              <MenuItem value="estudiantes">Estudiantes</MenuItem>
+              <MenuItem value="voluntarios">Voluntarios</MenuItem>
+              <MenuItem value="cursos">Cursos</MenuItem>
             </Select>
           </FormControl>
 
-          {/* Campos de fecha según el tipo de reporte */}
-          {reportType === 'diario' && (
-            <TextField
-              label="Fecha Específica"
-              type="date"
-              value={specificDate}
-              onChange={(e) => setSpecificDate(e.target.value)}
-              margin="normal"
-              fullWidth
-              InputLabelProps={{
-                shrink: true,
-              }}
-            />
-          )}
+          {/* Campos de fecha de inicio y fin */}
+          <TextField
+            label="Fecha de Inicio (opcional)"
+            type="date"
+            value={startDate}
+            onChange={(e) => setStartDate(e.target.value)}
+            margin="normal"
+            fullWidth
+            InputLabelProps={{
+              shrink: true,
+            }}
+            helperText="Sin fecha = todos los registros. Con fecha = desde esta fecha en adelante"
+          />
 
-          {reportType === 'semanal' && (
-            <TextField
-              label="Fecha de Inicio"
-              type="date"
-              value={startDate}
-              onChange={(e) => setStartDate(e.target.value)}
-              margin="normal"
-              fullWidth
-              InputLabelProps={{
-                shrink: true,
-              }}
-            />
-          )}
-
-          {reportType === 'mensual' && (
-            <Box sx={{ display: 'flex', gap: 2 }}>
-              <FormControl fullWidth margin="normal">
-                <InputLabel id="month-label">Mes</InputLabel>
-                <Select
-                  labelId="month-label"
-                  value={month}
-                  onChange={(e) => setMonth(e.target.value)}
-                  label="Mes"
-                >
-                  {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map((m) => (
-                    <MenuItem key={m} value={m}>
-                      {new Date(2023, m-1).toLocaleString('es', { month: 'long' })}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-              <TextField
-                label="Año"
-                type="number"
-                value={year}
-                onChange={(e) => setYear(e.target.value)}
-                margin="normal"
-                fullWidth
-              />
-            </Box>
-          )}
-
-          {/* Dropdown para seleccionar clase (curso) */}
-          <FormControl fullWidth margin="normal">
-            <InputLabel id="class-select-label">Clase (Opcional)</InputLabel>
-            <Select
-              labelId="class-select-label"
-              value={classId}
-              onChange={(e) => setClassId(e.target.value)}
-              label="Clase (Opcional)"
-            >
-              <MenuItem value="">Todas las clases</MenuItem>
-              {courses.map((course) => (
-                <MenuItem key={course.id} value={course.id}>
-                  {course.name} ({course.dia}) - {course.horario}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
+          <TextField
+            label="Fecha de Fin (opcional)"
+            type="date"
+            value={endDate}
+            onChange={(e) => setEndDate(e.target.value)}
+            margin="normal"
+            fullWidth
+            InputLabelProps={{
+              shrink: true,
+            }}
+            helperText="Sin fecha = todos los registros. Con fecha = hasta esta fecha"
+          />
         </Box>
       </DialogContent>
       <DialogActions>
@@ -331,99 +284,6 @@ function ManagementReportDialog({ open, onClose, onDownload }) {
   );
 }
 
-// Impact Report Dialog
-function ImpactReportDialog({ open, onClose, onDownload }) {
-  const [loading, setLoading] = useState(false);
-  const [period, setPeriod] = useState('mes');
-  const [threshold, setThreshold] = useState(0.5);
-
-  const handleSubmit = async () => {
-    try {
-      setLoading(true);
-      
-      const params = {
-        periodo: period,
-        umbral: threshold
-      };
-      
-      const blob = await downloadImpactExcel(params);
-      
-      // Generate filename
-      const filename = `Reporte_Impacto_${period}_${getCurrentDate()}.xlsx`;
-      
-      downloadBlob(blob, filename);
-      onClose();
-      toast.success('¡Reporte descargado con éxito!');
-      
-    } catch (error) {
-      toast.error('Error al descargar el reporte: ' + error.message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  return (
-    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
-      <DialogTitle>
-        <Box display="flex" alignItems="center">
-          <BarChartOutlined style={{ marginRight: 10, color: '#f4a582' }} />
-          Configurar Reporte de Impacto
-        </Box>
-      </DialogTitle>
-      <DialogContent>
-        <Box py={1}>
-          <FormControl fullWidth margin="normal">
-            <InputLabel id="period-label">Periodo</InputLabel>
-            <Select
-              labelId="period-label"
-              value={period}
-              onChange={(e) => setPeriod(e.target.value)}
-              label="Periodo"
-            >
-              <MenuItem value="mes">Mensual</MenuItem>
-              <MenuItem value="trimestre">Trimestral</MenuItem>
-              <MenuItem value="semestre">Semestral</MenuItem>
-              <MenuItem value="anual">Anual</MenuItem>
-            </Select>
-          </FormControl>
-
-          <Box mt={2}>
-            <Typography gutterBottom>Umbral: {threshold}</Typography>
-            <TextField
-              type="range"
-              value={threshold}
-              onChange={(e) => setThreshold(parseFloat(e.target.value))}
-              inputProps={{
-                min: 0,
-                max: 1,
-                step: 0.1
-              }}
-              fullWidth
-            />
-            <Typography variant="body2" color="text.secondary">
-              El umbral determina el punto de corte para considerar un impacto significativo (0-1)
-            </Typography>
-          </Box>
-        </Box>
-      </DialogContent>
-      <DialogActions>
-        <Button onClick={onClose} disabled={loading}>
-          Cancelar
-        </Button>
-        <Button 
-          onClick={handleSubmit} 
-          variant="contained" 
-          color="secondary" 
-          startIcon={loading ? <CircularProgress size={20} /> : <DownloadOutlined />}
-          disabled={loading}
-        >
-          {loading ? 'Descargando...' : 'Descargar'}
-        </Button>
-      </DialogActions>
-    </Dialog>
-  );
-}
-
 export default function Excels() {
   const [dialogOpen, setDialogOpen] = useState(null);
 
@@ -431,16 +291,9 @@ export default function Excels() {
     {
       key: 'management',
       title: 'Reporte de Gestión',
-      description: 'Métricas de gestión con indicadores clave de rendimiento. Permite filtrar por periodo, fecha y clase.',
+      description: 'Descarga datos completos de padres, estudiantes, voluntarios o cursos filtrados por fecha de registro.',
       icon: <BarChartOutlined style={{ fontSize: 24 }} />,
       color: '#6a9eda'
-    },
-    {
-      key: 'impact',
-      title: 'Reporte de Impacto',
-      description: 'Análisis del impacto en estudiantes y comunidad. Configurable por periodo y umbral de significancia.',
-      icon: <BarChartOutlined style={{ fontSize: 24 }} />,
-      color: '#f4a582'
     }
   ];
 
@@ -448,9 +301,6 @@ export default function Excels() {
     switch (reportKey) {
       case 'management':
         setDialogOpen('management');
-        break;
-      case 'impact':
-        setDialogOpen('impact');
         break;
       default:
         toast.error('Reporte no disponible');
@@ -489,7 +339,6 @@ export default function Excels() {
       </Box>
       <ToastContainer position="bottom-right" />
       <ManagementReportDialog open={dialogOpen === 'management'} onClose={() => setDialogOpen(null)} />
-      <ImpactReportDialog open={dialogOpen === 'impact'} onClose={() => setDialogOpen(null)} />
     </ThemeProvider>
   );
 }

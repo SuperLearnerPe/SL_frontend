@@ -43,7 +43,7 @@ export default function Profile() {
         const id_user = localStorage.getItem('id');
         const token = localStorage.getItem('access_token');
 
-        const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/user/Data_user/`, {
+        const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/user/`, {
           params: { id_user },
           headers: {
             Accept: '*/*',

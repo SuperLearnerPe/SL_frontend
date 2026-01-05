@@ -1,9 +1,35 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
-import { Container, Box, Grid, Grow, TextField, InputAdornment, CircularProgress, Typography } from '@mui/material';
-import CourseCard from './courses/courseCard/CourseCard';
-import { formatTime } from '../../utils/formatTime';
+import {
+  Container,
+  Box,
+  Grid,
+  Grow,
+  TextField,
+  InputAdornment,
+  CircularProgress,
+  Typography,
+  Button,
+  Snackbar,
+  Alert,
+  ToggleButtonGroup,
+  ToggleButton,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Paper,
+  Chip
+} from '@mui/material';
+import AddIcon from '@mui/icons-material/Add';
+import ViewModuleIcon from '@mui/icons-material/ViewModule';
+import ViewListIcon from '@mui/icons-material/ViewList';
 import SearchOutlined from '@ant-design/icons/SearchOutlined';
+import CourseCard from './courses/courseCard/CourseCard';
+import CourseForm from './courses/CourseForm';
+import { getCourses, createCourse } from './courses/api';
+import { formatTime } from '../../utils/formatTime';
 
 export default function DashboardDefault() {
   const [courses, setCourses] = useState([]);
@@ -11,39 +37,30 @@ export default function DashboardDefault() {
   const [searchTerm, setSearchTerm] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [openDialog, setOpenDialog] = useState(false);
+  const [currentCourse, setCurrentCourse] = useState(null);
+  const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
+  const [viewMode, setViewMode] = useState('card');
 
   useEffect(() => {
-    const token = localStorage.getItem('access_token');
-    const userId = localStorage.getItem('id');
-    const roleId = localStorage.getItem('role');
+    fetchCourses();
+  }, []);
 
+  const fetchCourses = async () => {
     setIsLoading(true);
     setError(null);
 
-    axios
-      .get(`${import.meta.env.VITE_API_URL}/api/class/get_courses/`, {
-        params: {
-          user_id: Number(userId),
-          role_id: Number(roleId)
-        },
-        headers: {
-          Accept: '*/*',
-          Authorization: `Token ${token}`,
-          'Content-Type': 'application/json'
-        },
-        withCredentials: true
-      })
-      .then((response) => {
-        setCourses(response.data);
-        setFilteredCourses(response.data);
-        setIsLoading(false);
-      })
-      .catch((error) => {
-        console.error('Error fetching courses:', error.response ? error.response.data : error);
-        setError('Error al cargar los cursos. Por favor, intente de nuevo más tarde.');
-        setIsLoading(false);
-      });
-  }, []);
+    try {
+      const data = await getCourses();
+      setCourses(data);
+      setFilteredCourses(data);
+    } catch (error) {
+      console.error('Error fetching courses:', error);
+      setError('Error al cargar los cursos. Por favor, intente de nuevo más tarde.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleSearch = (event) => {
     const { value } = event.target;
@@ -53,25 +70,73 @@ export default function DashboardDefault() {
     setFilteredCourses(filtered);
   };
 
+  const handleAddCourse = () => {
+    setCurrentCourse(null);
+    setOpenDialog(true);
+  };
+
+  const handleSaveCourse = async (courseData) => {
+    try {
+      if (currentCourse && currentCourse.id) {
+        // Actualizar curso existente (para futuro)
+        // await updateCourse(currentCourse.id, courseData);
+        setSnackbar({ open: true, message: 'Curso actualizado exitosamente', severity: 'success' });
+      } else {
+        // Crear nuevo curso
+        await createCourse(courseData);
+        setSnackbar({ open: true, message: 'Curso creado exitosamente', severity: 'success' });
+      }
+      fetchCourses(); // Recargar la lista
+    } catch (error) {
+      console.error('Error saving course:', error);
+      setSnackbar({ open: true, message: 'Error al guardar el curso', severity: 'error' });
+    }
+  };
+
   return (
     <Container maxWidth="lg">
       <Box my={4} marginTop={0}>
-        <TextField
-          label="Buscar cursos"
-          variant="outlined"
-          size="small"
-          fullWidth
-          value={searchTerm}
-          onChange={handleSearch}
-          InputProps={{
-            startAdornment: (
-              <InputAdornment position="start">
-                <SearchOutlined />
-              </InputAdornment>
-            )
-          }}
-          sx={{ mb: 3 }}
-        />
+        {/* Barra de búsqueda, botón agregar y selector de vista */}
+        <Box display="flex" gap={2} alignItems="center" mb={3}>
+          <TextField
+            label="Buscar cursos"
+            variant="outlined"
+            size="small"
+            fullWidth
+            value={searchTerm}
+            onChange={handleSearch}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchOutlined />
+                </InputAdornment>
+              )
+            }}
+          />
+          <ToggleButtonGroup
+            value={viewMode}
+            exclusive
+            onChange={(e, newMode) => newMode && setViewMode(newMode)}
+            size="small"
+            sx={{ whiteSpace: 'nowrap' }}
+          >
+            <ToggleButton value="card">
+              <ViewModuleIcon />
+            </ToggleButton>
+            <ToggleButton value="table">
+              <ViewListIcon />
+            </ToggleButton>
+          </ToggleButtonGroup>
+          <Button
+            variant="contained"
+            color="primary"
+            startIcon={<AddIcon />}
+            onClick={handleAddCourse}
+            sx={{ whiteSpace: 'nowrap', minWidth: 'auto' }}
+          >
+            Agregar Curso
+          </Button>
+        </Box>
 
         {isLoading ? (
           <Box display="flex" justifyContent="center" alignItems="center" height="50vh">
@@ -81,7 +146,7 @@ export default function DashboardDefault() {
           <Box display="flex" justifyContent="center" alignItems="center" height="50vh">
             <Typography color="error">{error}</Typography>
           </Box>
-        ) : (
+        ) : viewMode === 'card' ? (
           <Grid container spacing={3}>
             {filteredCourses.map((course, index) => (
               <Grow in={true} style={{ transformOrigin: '0 0 0' }} {...{ timeout: 1000 + index * 200 }} key={course.id || index}>
@@ -97,8 +162,75 @@ export default function DashboardDefault() {
               </Grow>
             ))}
           </Grid>
+        ) : (
+          <TableContainer component={Paper}>
+            <Table>
+              <TableHead>
+                <TableRow>
+                  <TableCell><strong>Nombre</strong></TableCell>
+                  <TableCell><strong>Categoría</strong></TableCell>
+                  <TableCell><strong>Día</strong></TableCell>
+                  <TableCell><strong>Horario</strong></TableCell>
+                  <TableCell><strong>Estado</strong></TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {filteredCourses.map((course) => (
+                  <TableRow key={course.id} hover sx={{ cursor: 'pointer' }}>
+                    <TableCell>
+                      <Box display="flex" alignItems="center" gap={1}>
+                        <Box
+                          sx={{
+                            width: 12,
+                            height: 12,
+                            borderRadius: '50%',
+                            backgroundColor: course.color || '#1976d2'
+                          }}
+                        />
+                        {course.name}
+                      </Box>
+                    </TableCell>
+                    <TableCell>{course.category || 'N/A'}</TableCell>
+                    <TableCell>{course.day || 'N/A'}</TableCell>
+                    <TableCell>
+                      {course.start_time && course.end_time 
+                        ? formatTime(course.start_time, course.end_time) 
+                        : 'N/A'}
+                    </TableCell>
+                    <TableCell>
+                      <Chip 
+                        label={course.status === 1 ? 'Activo' : 'Inactivo'} 
+                        color={course.status === 1 ? 'success' : 'default'}
+                        size="small"
+                      />
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
         )}
       </Box>
+
+      {/* Modal para crear/editar curso */}
+      <CourseForm
+        open={openDialog}
+        onClose={() => setOpenDialog(false)}
+        onSave={handleSaveCourse}
+        initialCourse={currentCourse}
+      />
+
+      {/* Snackbar para notificaciones */}
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={6000}
+        onClose={() => setSnackbar({ ...snackbar, open: false })}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+      >
+        <Alert onClose={() => setSnackbar({ ...snackbar, open: false })} severity={snackbar.severity} sx={{ width: '100%' }}>
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </Container>
   );
 }

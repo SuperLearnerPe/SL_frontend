@@ -10,7 +10,12 @@ import {
   Slide,
   DialogActions,
   DialogTitle,
-  CircularProgress
+  CircularProgress,
+  TextField,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem
 } from '@mui/material';
 import { alpha, styled } from '@mui/material/styles';
 import StyledAvatar from '../common/StyledAvatar';
@@ -54,6 +59,8 @@ export default function CourseDialog({ open, onClose, courseId, courseName, card
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [sessions, setSessions] = useState([]);
   const [newSessionData, setNewSessionData] = useState(null);
+  const [volunteers, setVolunteers] = useState([]);
+  const [loadingVolunteers, setLoadingVolunteers] = useState(false);
 
   const API_URL = import.meta.env.VITE_API_URL;
 
@@ -61,7 +68,7 @@ export default function CourseDialog({ open, onClose, courseId, courseName, card
     setIsLoading(true);
     try {
       const token = localStorage.getItem('access_token');
-      const response = await axios.get(`${API_URL}/api/student/get_sessions_class?class_id=${courseId}`, {
+      const response = await axios.get(`${API_URL}/api/course/${courseId}/sessions`, {
         headers: {
           Authorization: `Token ${token}`,
           Accept: '*/*',
@@ -103,28 +110,68 @@ export default function CourseDialog({ open, onClose, courseId, courseName, card
     navigate(`attendance/${courseId}/${sessionNum}`);
   };
 
+  const fetchVolunteers = async () => {
+    setLoadingVolunteers(true);
+    try {
+      const token = localStorage.getItem('access_token');
+      const response = await axios.get(`${API_URL}/volunteers/teachers/Get_Volunteers/`, {
+        headers: {
+          Authorization: `Token ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      // Filtrar solo voluntarios activos
+      const activeVolunteers = response.data.filter((v) => v.status === 1);
+      setVolunteers(activeVolunteers);
+    } catch (error) {
+      console.error('Error fetching volunteers:', error);
+      toast.error('Error al cargar voluntarios', { autoClose: 1500 });
+    } finally {
+      setLoadingVolunteers(false);
+    }
+  };
+
   const handleAddSession = () => {
     const nextSessionNumber = sessions.length + 1;
-    const currentDate = new Date().toISOString().split('T')[0];
+    const now = new Date();
+    const currentDate = now.toISOString().split('T')[0];
+    const currentTime = now.toTimeString().slice(0, 5); // HH:MM
 
     setNewSessionData({
       num_session: nextSessionNumber,
-      date: currentDate
+      date: currentDate,
+      time: currentTime,
+      volunteer_id: ''
     });
 
+    fetchVolunteers();
     setConfirmDialogOpen(true);
+  };
+
+  const handleSessionDataChange = (field, value) => {
+    setNewSessionData(prev => ({
+      ...prev,
+      [field]: value
+    }));
   };
 
   const handleConfirmAddSession = async () => {
     try {
       const token = localStorage.getItem('access_token');
+      
+      // Combinar fecha y hora en formato ISO
+      const sessionDateTime = `${newSessionData.date}T${newSessionData.time}:00`;
+      
+      const requestData = { date: sessionDateTime };
+      
+      // Agregar volunteer_id solo si se seleccionó uno
+      if (newSessionData.volunteer_id) {
+        requestData.volunteer_id = parseInt(newSessionData.volunteer_id);
+      }
+      
       const response = await axios.post(
-        `${API_URL}/api/student/create_session/`,
-        {
-          id_class: courseId,
-          num_session: newSessionData.num_session,
-          date: newSessionData.date
-        },
+        `${API_URL}/api/course/${courseId}/session/`,
+        requestData,
         {
           headers: {
             Accept: '*/*',
@@ -154,7 +201,8 @@ export default function CourseDialog({ open, onClose, courseId, courseName, card
       }, 500);
     } catch (error) {
       console.error('Error creating session:', error.response?.data || error.message);
-      toast.error('There was an issue creating the session. Please try again.', { autoClose: 1500 });
+      const errorMessage = error.response?.data?.error || 'There was an issue creating the session. Please try again.';
+      toast.error(errorMessage, { autoClose: 3000 });
     }
   };
 
@@ -308,24 +356,66 @@ export default function CourseDialog({ open, onClose, courseId, courseName, card
       <ConfirmDialog open={confirmDialogOpen} onClose={() => setConfirmDialogOpen(false)} aria-labelledby="confirm-dialog-title">
         <DialogTitle id="confirm-dialog-title">
           <Typography variant="h6" component="div" fontWeight="bold" color={cardColor}>
-            Confirm New Session
+            Confirmar Nueva Sesión
           </Typography>
         </DialogTitle>
         <DialogContent>
           <Box sx={{ mt: 2 }}>
             <Typography variant="body1" gutterBottom>
-              Una nueva sesión será creada con los siguientes de talles:
+              Configura los detalles de la nueva sesión:
             </Typography>
-            <Box sx={{ mt: 2, p: 2, bgcolor: alpha(cardColor, 0.1), borderRadius: 2 }}>
-              <Typography variant="body1" gutterBottom>
-                <strong>Número de Sesión:</strong> {newSessionData?.num_session}
-              </Typography>
-              <Typography variant="body1">
-                <strong>Fecha de Sesión:</strong> {newSessionData?.date}
-              </Typography>
+            <Box sx={{ mt: 3, display: 'flex', flexDirection: 'column', gap: 2 }}>
+              <TextField
+                label="Número de Sesión"
+                value={newSessionData?.num_session || ''}
+                disabled
+                fullWidth
+                variant="outlined"
+              />
+              <TextField
+                label="Fecha de Sesión"
+                type="date"
+                value={newSessionData?.date || ''}
+                onChange={(e) => handleSessionDataChange('date', e.target.value)}
+                fullWidth
+                variant="outlined"
+                InputLabelProps={{
+                  shrink: true,
+                }}
+              />
+              <TextField
+                label="Hora de Sesión"
+                type="time"
+                value={newSessionData?.time || ''}
+                onChange={(e) => handleSessionDataChange('time', e.target.value)}
+                fullWidth
+                variant="outlined"
+                InputLabelProps={{
+                  shrink: true,
+                }}
+              />
+              <FormControl fullWidth variant="outlined">
+                <InputLabel id="volunteer-select-label">Voluntario Asignado</InputLabel>
+                <Select
+                  labelId="volunteer-select-label"
+                  value={newSessionData?.volunteer_id || ''}
+                  onChange={(e) => handleSessionDataChange('volunteer_id', e.target.value)}
+                  label="Voluntario Asignado"
+                  disabled={loadingVolunteers}
+                >
+                  <MenuItem value="">
+                    <em>Sin asignar</em>
+                  </MenuItem>
+                  {volunteers.map((volunteer) => (
+                    <MenuItem key={volunteer.id} value={volunteer.id}>
+                      {volunteer.name} {volunteer.last_name}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
             </Box>
 
-            <Typography variant="body1" sx={{ mt: 2 }}>
+            <Typography variant="body1" sx={{ mt: 3 }}>
               ¿Estás seguro de crear esta nueva sesión?
             </Typography>
           </Box>

@@ -1,5 +1,23 @@
 const BASE_URL = import.meta.env.VITE_API_URL;
 
+// Función para traducir nombres de campos al español
+const translateFieldName = (fieldName) => {
+  const translations = {
+    'document_id': 'DNI',
+    'name': 'Nombre',
+    'last_name': 'Apellido',
+    'email': 'Email',
+    'phone': 'Teléfono',
+    'address': 'Dirección',
+    'city': 'Ciudad',
+    'country': 'País',
+    'nationality': 'Nacionalidad',
+    'birthdate': 'Fecha de nacimiento',
+    'gender': 'Género',
+    'document_type': 'Tipo de documento',
+  };
+  return translations[fieldName] || fieldName;
+};
 
 // Función helper para obtener el token
 const getAuthHeaders = () => {
@@ -13,7 +31,7 @@ const getAuthHeaders = () => {
 // Obtener todos los padres
 export const getParents = async () => {
   try {
-    const response = await fetch(`${BASE_URL}/api/parents/get/`, {
+    const response = await fetch(`${BASE_URL}/api/parents/`, {
       method: 'GET',
       headers: getAuthHeaders()
     })
@@ -30,14 +48,21 @@ export const getParents = async () => {
 // Obtener un padre por ID
 export const getParentById = async (parentId) => {
   try {
-    const response = await fetch(`${BASE_URL}/api/parents/get-id/?parent_id=${parentId}`, {
+    const response = await fetch(`${BASE_URL}/api/parents/${parentId}/`, {
       method: 'GET',
       headers: getAuthHeaders()
     })
+    
+    const data = await response.json()
+    
     if (!response.ok) {
-      throw new Error("Network response was not ok")
+      let errorMessage = "Error al obtener padre por ID";
+      if (data && data.detail) {
+        errorMessage = data.detail;
+      }
+      throw new Error(errorMessage)
     }
-    return await response.json()
+    return data
   } catch (error) {
     console.error("Error al obtener padre por ID:", error)
     throw error
@@ -52,18 +77,46 @@ export const createParent = async (parentData) => {
       email: parentData.email ? parentData.email : null
     };
     
-    const response = await fetch(`${BASE_URL}/api/parents/create/`, {
+    const response = await fetch(`${BASE_URL}/api/parents/`, {
       method: "POST",
       headers: getAuthHeaders(),
       body: JSON.stringify(formattedData),
     })
+    
+    const data = await response.json()
+    
     if (!response.ok) {
-      throw new Error("Network response was not ok")
+      // Extraer mensajes de error del backend
+      let errorMessage = "Error al crear el padre";
+      
+      if (data) {
+        // Si hay errores de validación de campos específicos
+        if (typeof data === 'object') {
+          const errorMessages = [];
+          for (const [field, messages] of Object.entries(data)) {
+            const fieldName = translateFieldName(field);
+            if (Array.isArray(messages)) {
+              errorMessages.push(`${fieldName}: ${messages.join(', ')}`);
+            } else if (typeof messages === 'string') {
+              errorMessages.push(`${fieldName}: ${messages}`);
+            }
+          }
+          if (errorMessages.length > 0) {
+            errorMessage = errorMessages.join('\n');
+          }
+        } else if (typeof data === 'string') {
+          errorMessage = data;
+        } else if (data.detail) {
+          errorMessage = data.detail;
+        }
+      }
+      
+      throw new Error(errorMessage)
     }
-    return await response.json()
+    return data
   } catch (error) {
     console.error("Error al crear padre:", error)
-    throw new Error("Error al crear el padre")
+    throw error
   }
 }
 
@@ -91,18 +144,45 @@ export const updateParent = async (parentId, parentData) => {
     
     console.log("Formatted data for API:", formattedData);
     
-    const response = await fetch(`${BASE_URL}/api/parents/update/?parent_id=${parentId}`, {
+    const response = await fetch(`${BASE_URL}/api/parents/${parentId}/`, {
       method: "PUT",
       headers: getAuthHeaders(),
       body: JSON.stringify(formattedData),
     })
     
+    const data = await response.json()
+    
     if (!response.ok) {
-      const errorData = await response.text();
-      console.error("API error response:", errorData);
-      throw new Error("Network response was not ok");
+      console.error("API error response:", data);
+      
+      // Extraer mensajes de error del backend
+      let errorMessage = "Error al actualizar el padre";
+      
+      if (data) {
+        // Si hay errores de validación de campos específicos
+        if (typeof data === 'object') {
+          const errorMessages = [];
+          for (const [field, messages] of Object.entries(data)) {
+            const fieldName = translateFieldName(field);
+            if (Array.isArray(messages)) {
+              errorMessages.push(`${fieldName}: ${messages.join(', ')}`);
+            } else if (typeof messages === 'string') {
+              errorMessages.push(`${fieldName}: ${messages}`);
+            }
+          }
+          if (errorMessages.length > 0) {
+            errorMessage = errorMessages.join('\n');
+          }
+        } else if (typeof data === 'string') {
+          errorMessage = data;
+        } else if (data.detail) {
+          errorMessage = data.detail;
+        }
+      }
+      
+      throw new Error(errorMessage)
     }
-    return await response.json();
+    return data;
   } catch (error) {
     console.error("Error al actualizar padre:", error);
     throw error;
@@ -116,20 +196,32 @@ export const toggleParentStatus = async (parentId) => {
       method: "PUT",
       headers: getAuthHeaders(),
     })
+    
+    const data = await response.json()
+    
     if (!response.ok) {
-      throw new Error("Network response was not ok")
+      let errorMessage = "Error al cambiar el estado";
+      if (data && data.detail) {
+        errorMessage = data.detail;
+      }
+      throw new Error(errorMessage)
     }
-    return await response.json()
+    return data
   } catch (error) {
     console.error("Error al cambiar estado del padre:", error)
     throw error
   }
 }
 
-// Eliminar un padre
+// Eliminar un padre (endpoint no disponible en el backend)
 export const deleteParent = async (parentId) => {
-  try {
-    const response = await fetch(`${BASE_URL}/api/parents/delete/?parent_id=${parentId}`, {
+  // Este endpoint no está implementado en el backend
+  // Para "eliminar" un padre, use toggleParentStatus para desactivarlo
+  console.warn('Delete endpoint not implemented. Use toggleParentStatus to deactivate.');
+  throw new Error("Delete endpoint not implemented in backend");
+  
+  /* try {
+    const response = await fetch(`${BASE_URL}/api/parents/${parentId}/`, {
       method: "DELETE",
       headers: getAuthHeaders(),
     })
@@ -140,5 +232,5 @@ export const deleteParent = async (parentId) => {
   } catch (error) {
     console.error("Error al eliminar padre:", error)
     throw error
-  }
+  } */
 }

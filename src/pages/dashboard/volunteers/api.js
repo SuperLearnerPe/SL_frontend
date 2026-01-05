@@ -73,7 +73,11 @@ export const createVolunteer = async (volunteerData) => {
   if (!response.ok) {
     const errorResponse = await response.json();  // Obtén el cuerpo del error del servidor
     console.error('Error en la creación del voluntario:', errorResponse);  // Verifica qué errores está devolviendo el servidor
-    throw new Error('Failed to create volunteer');
+    
+    // Crear un error con los detalles específicos del backend
+    const error = new Error('Error al crear voluntario');
+    error.details = errorResponse;  // Adjuntar los detalles del error
+    throw error;
   }
 
   return response.json();

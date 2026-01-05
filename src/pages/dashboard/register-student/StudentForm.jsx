@@ -1,33 +1,46 @@
-"use client"
+'use client';
 
-import { Dialog, DialogTitle, DialogContent, DialogActions, TextField, Button, Grid, MenuItem, Typography } from "@mui/material"
-import { useState, useEffect, useCallback } from "react"
-import Swal from "sweetalert2"
+import {
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  TextField,
+  Button,
+  Grid,
+  MenuItem,
+  Typography,
+  Autocomplete,
+  CircularProgress
+} from '@mui/material';
+import { useState, useEffect, useCallback } from 'react';
+import Swal from 'sweetalert2';
+import { getParents } from '../register-parents/api-parents';
 
 const StudentForm = ({ open, onClose, onSave, initialStudent }) => {
   const [student, setStudent] = useState({
-    name: "",
-    last_name: "",
-    parent_dni: "",
-    nationality: "",
-    document_id: "",
-    birthdate: "",
-    gender: "",
+    name: '',
+    last_name: '',
+    parent_dni: '',
+    nationality: '',
+    document_id: '',
+    birthdate: '',
+    gender: '',
     status: 1,
-    birth_city: "",
-    birth_country: "",
-  })
+    birth_city: '',
+    birth_country: ''
+  });
 
   const [errors, setErrors] = useState({
-    name: "",
-    last_name: "",
-    parent_dni: "",
-    document_id: "",
-    birthdate: "",
-    gender: "",
-    birth_city: "",
-    birth_country: "",
-  })
+    name: '',
+    last_name: '',
+    parent_dni: '',
+    document_id: '',
+    birthdate: '',
+    gender: '',
+    birth_city: '',
+    birth_country: ''
+  });
 
   const [touched, setTouched] = useState({
     name: false,
@@ -37,189 +50,231 @@ const StudentForm = ({ open, onClose, onSave, initialStudent }) => {
     birthdate: false,
     gender: false,
     birth_city: false,
-    birth_country: false,
-  })
+    birth_country: false
+  });
 
-  const [isEditing, setIsEditing] = useState(false)
-  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [isEditing, setIsEditing] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [parents, setParents] = useState([]);
+  const [loadingParents, setLoadingParents] = useState(false);
+  const [selectedParent, setSelectedParent] = useState(null);
 
   const validateField = useCallback((name, value) => {
     switch (name) {
-      case "name":
-      case "last_name":
+      case 'name':
+      case 'last_name':
         if (!value.trim()) {
-          return "Este campo es requerido"
+          return 'Este campo es requerido';
         }
         if (!/^[A-Za-zÁáÉéÍíÓóÚúÑñ\s]+$/.test(value)) {
-          return "Solo se permiten letras"
+          return 'Solo se permiten letras';
         }
-        return ""
-      case "parent_dni":
-      case "document_id":
+        return '';
+      case 'parent_dni':
+      case 'document_id':
         if (!value.trim()) {
-          return "Este campo es requerido"
+          return 'Este campo es requerido';
         }
         if (!/^\d{8}$/.test(value)) {
-          return "El DNI debe tener 8 dígitos"
+          return 'El DNI debe tener 8 dígitos';
         }
-        return ""
-      case "birthdate":
+        return '';
+      case 'birthdate':
         if (!value) {
-          return "Este campo es requerido"
+          return 'Este campo es requerido';
         }
         {
-          const date = new Date(value)
-          const today = new Date()
+          const date = new Date(value);
+          const today = new Date();
           if (date > today) {
-            return "La fecha no puede ser futura"
+            return 'La fecha no puede ser futura';
           }
         }
-        return ""
-      case "gender":
+        return '';
+      case 'gender':
         if (!value) {
-          return "Este campo es requerido"
+          return 'Este campo es requerido';
         }
-        return ""
-      case "birth_city":
-      case "birth_country":
+        return '';
+      case 'birth_city':
+      case 'birth_country':
         if (!value.trim()) {
-          return "Este campo es requerido"
+          return 'Este campo es requerido';
         }
-        return ""
+        return '';
       default:
-        return ""
+        return '';
     }
-  }, [])
+  }, []);
 
   const validateForm = useCallback(() => {
-    const newErrors = {}
-    let isValid = true
+    const newErrors = {};
+    let isValid = true;
 
-    // En modo edición, validamos todos los campos editables incluyendo document_id
+    // En modo edición, validamos todos los campos editables incluyendo document_id y parent_dni
     if (isEditing) {
-      const fieldsToValidate = ["name", "last_name", "gender", "birthdate", "birth_city", "birth_country", "document_id"]
+      const fieldsToValidate = ['name', 'last_name', 'parent_dni', 'gender', 'birthdate', 'birth_city', 'birth_country', 'document_id'];
       fieldsToValidate.forEach((field) => {
-        const error = validateField(field, student[field])
-        newErrors[field] = error
+        const error = validateField(field, student[field]);
+        newErrors[field] = error;
         if (error) {
-          isValid = false
+          isValid = false;
         }
-      })
+      });
     } else {
       // En modo creación, validamos todos los campos excepto nationality y status
       Object.keys(student).forEach((field) => {
-        if (field !== "nationality" && field !== "status") {
-          const error = validateField(field, student[field])
-          newErrors[field] = error
+        if (field !== 'nationality' && field !== 'status') {
+          const error = validateField(field, student[field]);
+          newErrors[field] = error;
           if (error) {
-            isValid = false
+            isValid = false;
           }
         }
-      })
+      });
     }
 
-    setErrors(newErrors)
-    return isValid
-  }, [student, validateField, isEditing])
+    setErrors(newErrors);
+    return isValid;
+  }, [student, validateField, isEditing]);
 
   const resetStudentState = useCallback(() => {
     setStudent({
-      name: "",
-      last_name: "",
-      parent_dni: "",
-      nationality: "",
-      document_id: "",
-      birthdate: "",
-      gender: "",
+      name: '',
+      last_name: '',
+      parent_dni: '',
+      nationality: '',
+      document_id: '',
+      birthdate: '',
+      gender: '',
       status: 1,
-      birth_city: "",
-      birth_country: "",
-    })
-    setErrors({})
-    setTouched({})
-    setIsEditing(false)
-    setIsSubmitting(false)
-  }, [])
+      birth_city: '',
+      birth_country: ''
+    });
+    setErrors({});
+    setTouched({});
+    setIsEditing(false);
+    setIsSubmitting(false);
+    setSelectedParent(null);
+  }, []);
 
   useEffect(() => {
     if (initialStudent) {
-      setIsEditing(true)
+      setIsEditing(true);
       setStudent({
         ...initialStudent,
-        name: initialStudent.name || "",
-        last_name: initialStudent.last_name || "",
-        parent_dni: initialStudent.parent_info?.dni || "",
-        nationality: initialStudent.nationality || "",
-        document_id: initialStudent.document_id || "",
-        birthdate: initialStudent.birthdate || "",
-        gender: initialStudent.gender || "",
+        name: initialStudent.name || '',
+        last_name: initialStudent.last_name || '',
+        parent_dni: initialStudent.parent_info?.dni || '',
+        nationality: initialStudent.nationality || '',
+        document_id: initialStudent.document_id || '',
+        birthdate: initialStudent.birthdate || '',
+        gender: initialStudent.gender || '',
         status: initialStudent.status || 1,
-        birth_city: initialStudent.birth_info?.city || "",
-        birth_country: initialStudent.birth_info?.country || "",
-      })
+        birth_city: initialStudent.birth_info?.city || '',
+        birth_country: initialStudent.birth_info?.country || ''
+      });
     } else {
-      resetStudentState()
+      resetStudentState();
     }
-  }, [initialStudent, resetStudentState])
+  }, [initialStudent, resetStudentState]);
+
+  // Cargar lista de padres cuando se abre el diálogo (tanto en creación como edición)
+  useEffect(() => {
+    if (open) {
+      fetchParents();
+    }
+  }, [open]);
+
+  // Sincronizar el padre seleccionado cuando cambian los padres o el estudiante inicial
+  useEffect(() => {
+    if (parents.length > 0 && initialStudent?.parent_info?.dni) {
+      const currentParent = parents.find((parent) => parent.document_id === initialStudent.parent_info.dni);
+      setSelectedParent(currentParent || null);
+    } else if (!initialStudent) {
+      setSelectedParent(null);
+    }
+  }, [parents, initialStudent]);
+
+  const fetchParents = async () => {
+    setLoadingParents(true);
+    try {
+      const data = await getParents();
+      // Filtrar solo padres activos
+      const activeParents = data.filter((parent) => parent.status === 1);
+      setParents(activeParents);
+    } catch (error) {
+      console.error('Error al cargar padres:', error);
+      Swal.fire({
+        title: 'Error',
+        text: 'No se pudieron cargar los padres. Intente nuevamente.',
+        icon: 'error',
+        confirmButtonText: 'Ok'
+      });
+    } finally {
+      setLoadingParents(false);
+    }
+  };
 
   const handleChange = (e) => {
-    const { name, value } = e.target
-    setStudent((prev) => ({ ...prev, [name]: value }))
+    const { name, value } = e.target;
+    setStudent((prev) => ({ ...prev, [name]: value }));
 
     // Validate field on change
-    const error = validateField(name, value)
-    setErrors((prev) => ({ ...prev, [name]: error }))
-  }
+    const error = validateField(name, value);
+    setErrors((prev) => ({ ...prev, [name]: error }));
+  };
 
   const handleBlur = (e) => {
-    const { name } = e.target
-    setTouched((prev) => ({ ...prev, [name]: true }))
+    const { name } = e.target;
+    setTouched((prev) => ({ ...prev, [name]: true }));
 
     // Validate field on blur
-    const error = validateField(name, student[name])
-    setErrors((prev) => ({ ...prev, [name]: error }))
-  }
+    const error = validateField(name, student[name]);
+    setErrors((prev) => ({ ...prev, [name]: error }));
+  };
 
   const handleSave = async () => {
     // Evitar múltiples envíos
-    if (isSubmitting) return
-    setIsSubmitting(true)
+    if (isSubmitting) return;
+    setIsSubmitting(true);
 
     // Mark all fields as touched
-    const newTouched = {}
+    const newTouched = {};
     if (isEditing) {
       // En modo edición, marcamos como tocados los campos editables
-      ["name", "last_name", "gender", "birthdate", "birth_city", "birth_country", "document_id"].forEach((field) => {
-        newTouched[field] = true
-      })
+      ['name', 'last_name', 'parent_dni', 'gender', 'birthdate', 'birth_city', 'birth_country', 'document_id'].forEach((field) => {
+        newTouched[field] = true;
+      });
     } else {
       // En modo creación, marcamos todos los campos como tocados
       Object.keys(student).forEach((field) => {
-        newTouched[field] = true
-      })
+        newTouched[field] = true;
+      });
     }
-    setTouched(newTouched)
+    setTouched(newTouched);
 
     // Validate all fields
     if (!validateForm()) {
-      setIsSubmitting(false)
+      setIsSubmitting(false);
       Swal.fire({
-        title: "Error",
-        text: "Por favor, complete todos los campos requeridos correctamente",
-        icon: "error",
-        confirmButtonText: "Ok",
-      })
-      return
+        title: 'Error',
+        text: 'Por favor, complete todos los campos requeridos correctamente',
+        icon: 'error',
+        confirmButtonText: 'Ok'
+      });
+      return;
     }
 
     try {
       if (isEditing) {
-        console.log("Preparando datos para actualizar estudiante con ID:", initialStudent.id)
-        // Incluir todos los campos editables incluyendo document_id
+        console.log('Preparando datos para actualizar estudiante con ID:', initialStudent.id);
+        // Incluir todos los campos editables incluyendo document_id y parent_dni
         const updateData = {
           id: initialStudent.id,
           name: student.name,
           last_name: student.last_name,
+          parent_dni: student.parent_dni,
           gender: student.gender,
           nationality: student.nationality,
           document_id: student.document_id,
@@ -227,87 +282,80 @@ const StudentForm = ({ open, onClose, onSave, initialStudent }) => {
           birth_city: student.birth_city,
           birth_country: student.birth_country,
           status: student.status
-        }
+        };
         // Llamar a onSave con los datos para actualizar
-        await onSave(updateData)
+        await onSave(updateData);
       } else {
         // Llamar a onSave con todos los datos para crear
-        await onSave(student)
+        await onSave(student);
       }
 
       // Cerrar el formulario y resetear el estado
-      onClose()
-      resetStudentState()
+      onClose();
+      resetStudentState();
 
       // Mostrar mensaje de éxito (ahora manejado por el componente padre)
     } catch (error) {
-      console.error("Error en el formulario:", error)
-      setIsSubmitting(false)
+      console.error('Error en el formulario:', error);
+      setIsSubmitting(false);
 
-      // Mostrar mensaje de error
+      // Mostrar mensaje de error con formato mejorado
+      const errorMessage = error.message || 'Hubo un problema al guardar el estudiante. Por favor, inténtelo de nuevo.';
+
       Swal.fire({
-        title: "Error",
-        text: "Hubo un problema al guardar el estudiante. Por favor, inténtelo de nuevo.",
-        icon: "error",
-        confirmButtonText: "Ok",
-      })
+        title: 'Error',
+        html: errorMessage.replace(/\n/g, '<br>'),
+        icon: 'error',
+        confirmButtonText: 'Ok'
+      });
     }
-  }
+  };
 
   const isFormValid = useCallback(() => {
     // Check if any field has an error
-    if (Object.values(errors).some((error) => error !== "")) {
-      return false
+    if (Object.values(errors).some((error) => error !== '')) {
+      return false;
     }
 
     // En modo edición, solo verificamos los campos editables
     if (isEditing) {
-      const requiredFields = ["name", "last_name", "gender"]
-      return requiredFields.every((field) => student[field].toString().trim() !== "")
+      const requiredFields = ['name', 'last_name', 'gender'];
+      return requiredFields.every((field) => student[field].toString().trim() !== '');
     } else {
       // En modo creación, verificamos todos los campos requeridos
-      const requiredFields = [
-        "name",
-        "last_name",
-        "parent_dni",
-        "document_id",
-        "birthdate",
-        "gender",
-        "birth_city",
-        "birth_country",
-      ]
-      return requiredFields.every((field) => student[field].toString().trim() !== "")
+      const requiredFields = ['name', 'last_name', 'parent_dni', 'document_id', 'birthdate', 'gender', 'birth_city', 'birth_country'];
+      return requiredFields.every((field) => student[field].toString().trim() !== '');
     }
-  }, [errors, student, isEditing])
+  }, [errors, student, isEditing]);
 
   return (
     <Dialog
       open={open}
       onClose={() => {
         if (!isSubmitting) {
-          onClose()
-          resetStudentState()
+          onClose();
+          resetStudentState();
         }
       }}
       maxWidth="sm"
       fullWidth
       PaperProps={{
         sx: {
-          borderRadius: "8px",
-        },
+          borderRadius: '8px'
+        }
       }}
     >
       <DialogTitle
         sx={{
-          borderBottom: "1px solid #e0e0e0",
-          padding: "16px 24px",
-          fontSize: "1.1rem",
-          fontWeight: 500,
+          borderBottom: '1px solid #e0e0e0',
+          padding: '16px 24px',
+          fontSize: '1.1rem',
+          fontWeight: 500
         }}
       >
-        {isEditing ? "Editar Estudiante" : "Añadir Estudiante"}
+        {isEditing ? 'Editar Estudiante' : 'Añadir Estudiante'}
       </DialogTitle>
-      <DialogContent sx={{ padding: "24px", paddingTop: "24px !important" }}>
+      <DialogContent sx={{ padding: '24px', paddingTop: '24px !important' }}>
         <Grid container spacing={3}>
           <Grid item xs={12}>
             <TextField
@@ -322,7 +370,7 @@ const StudentForm = ({ open, onClose, onSave, initialStudent }) => {
               helperText={touched.name && errors.name}
               size="small"
               InputLabelProps={{ shrink: true }}
-              sx={{ "& .MuiInputBase-root": { background: "#fff" } }}
+              sx={{ '& .MuiInputBase-root': { background: '#fff' } }}
               disabled={isSubmitting}
             />
           </Grid>
@@ -339,42 +387,65 @@ const StudentForm = ({ open, onClose, onSave, initialStudent }) => {
               helperText={touched.last_name && errors.last_name}
               size="small"
               InputLabelProps={{ shrink: true }}
-              sx={{ "& .MuiInputBase-root": { background: "#fff" } }}
+              sx={{ '& .MuiInputBase-root': { background: '#fff' } }}
               disabled={isSubmitting}
             />
           </Grid>
           <Grid item xs={12}>
-            <TextField
-              required
+            <Autocomplete
               fullWidth
-              label="DNI del Padre/Madre"
-              name="parent_dni"
-              value={student.parent_dni}
-              onChange={handleChange}
-              onBlur={handleBlur}
-              error={touched.parent_dni && Boolean(errors.parent_dni)}
-              helperText={
-                (touched.parent_dni && errors.parent_dni) ||
-                (isEditing && initialStudent?.parent_info?.parent_name
-                  ? `Padre/Madre: ${initialStudent.parent_info.parent_name} ${initialStudent.parent_info.parent_last_name}`
-                  : "Ingrese el DNI de un padre ya registrado en el sistema")
-              }
-              disabled={isEditing || isSubmitting}
-              size="small"
-              InputLabelProps={{ shrink: true }}
-              sx={{ "& .MuiInputBase-root": { background: "#fff" } }}
-              FormHelperTextProps={{
-                sx: {
-                  color: touched.parent_dni && errors.parent_dni 
-                    ? "error.main" 
-                    : isEditing 
-                      ? "text.secondary" 
-                      : "info.main", // Changed from "error.main" to "info.main"
-                  fontStyle: isEditing ? "normal" : "italic",
-                  fontSize: "0.75rem",
-                  marginTop: "3px"
-                },
+              options={parents}
+              getOptionLabel={(option) => `${option.name} ${option.last_name} - DNI: ${option.document_id}`}
+              value={selectedParent}
+              onChange={(event, newValue) => {
+                setSelectedParent(newValue);
+                setStudent((prev) => ({
+                  ...prev,
+                  parent_dni: newValue ? newValue.document_id : ''
+                }));
+                // Validar el campo después de seleccionar
+                const error = validateField('parent_dni', newValue ? newValue.document_id : '');
+                setErrors((prev) => ({ ...prev, parent_dni: error }));
+                setTouched((prev) => ({ ...prev, parent_dni: true }));
               }}
+              disabled={isSubmitting}
+              loading={loadingParents}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  required
+                  label="Padre/Madre"
+                  size="small"
+                  error={touched.parent_dni && Boolean(errors.parent_dni)}
+                  helperText={
+                    (touched.parent_dni && errors.parent_dni) ||
+                    (isEditing
+                      ? 'Puede cambiar el padre/madre asociado si es necesario'
+                      : 'Seleccione un padre/madre ya registrado en el sistema')
+                  }
+                  InputLabelProps={{ shrink: true }}
+                  sx={{ '& .MuiInputBase-root': { background: '#fff' } }}
+                  InputProps={{
+                    ...params.InputProps,
+                    endAdornment: (
+                      <>
+                        {loadingParents ? <CircularProgress color="inherit" size={20} /> : null}
+                        {params.InputProps.endAdornment}
+                      </>
+                    )
+                  }}
+                  FormHelperTextProps={{
+                    sx: {
+                      color: touched.parent_dni && errors.parent_dni ? 'error.main' : isEditing ? 'text.secondary' : 'info.main',
+                      fontStyle: isEditing ? 'normal' : 'italic',
+                      fontSize: '0.75rem',
+                      marginTop: '3px'
+                    }
+                  }}
+                />
+              )}
+              isOptionEqualToValue={(option, value) => option.id === value?.id}
+              noOptionsText="No se encontraron padres registrados"
             />
           </Grid>
           <Grid item xs={12}>
@@ -387,7 +458,7 @@ const StudentForm = ({ open, onClose, onSave, initialStudent }) => {
               onChange={handleChange}
               size="small"
               InputLabelProps={{ shrink: true }}
-              sx={{ "& .MuiInputBase-root": { background: "#fff" } }}
+              sx={{ '& .MuiInputBase-root': { background: '#fff' } }}
               disabled={isSubmitting}
             />
           </Grid>
@@ -404,7 +475,7 @@ const StudentForm = ({ open, onClose, onSave, initialStudent }) => {
               helperText={touched.document_id && errors.document_id}
               size="small"
               InputLabelProps={{ shrink: true }}
-              sx={{ "& .MuiInputBase-root": { background: "#fff" } }}
+              sx={{ '& .MuiInputBase-root': { background: '#fff' } }}
               disabled={isSubmitting}
             />
           </Grid>
@@ -422,7 +493,7 @@ const StudentForm = ({ open, onClose, onSave, initialStudent }) => {
               helperText={touched.birthdate && errors.birthdate}
               size="small"
               InputLabelProps={{ shrink: true }}
-              sx={{ "& .MuiInputBase-root": { background: "#fff" } }}
+              sx={{ '& .MuiInputBase-root': { background: '#fff' } }}
               disabled={isSubmitting}
             />
           </Grid>
@@ -440,7 +511,7 @@ const StudentForm = ({ open, onClose, onSave, initialStudent }) => {
               helperText={touched.gender && errors.gender}
               size="small"
               InputLabelProps={{ shrink: true }}
-              sx={{ "& .MuiInputBase-root": { background: "#fff" } }}
+              sx={{ '& .MuiInputBase-root': { background: '#fff' } }}
               disabled={isSubmitting}
             >
               <MenuItem value="male">Masculino</MenuItem>
@@ -460,7 +531,7 @@ const StudentForm = ({ open, onClose, onSave, initialStudent }) => {
               helperText={touched.birth_city && errors.birth_city}
               size="small"
               InputLabelProps={{ shrink: true }}
-              sx={{ "& .MuiInputBase-root": { background: "#fff" } }}
+              sx={{ '& .MuiInputBase-root': { background: '#fff' } }}
               disabled={isSubmitting}
             />
           </Grid>
@@ -477,7 +548,7 @@ const StudentForm = ({ open, onClose, onSave, initialStudent }) => {
               helperText={touched.birth_country && errors.birth_country}
               size="small"
               InputLabelProps={{ shrink: true }}
-              sx={{ "& .MuiInputBase-root": { background: "#fff" } }}
+              sx={{ '& .MuiInputBase-root': { background: '#fff' } }}
               disabled={isSubmitting} // Remove "isEditing ||" to make it editable in edit mode
             />
           </Grid>
@@ -498,22 +569,22 @@ const StudentForm = ({ open, onClose, onSave, initialStudent }) => {
       </DialogContent>
       <DialogActions
         sx={{
-          borderTop: "1px solid #e0e0e0",
-          padding: "16px 24px",
-          gap: "8px",
+          borderTop: '1px solid #e0e0e0',
+          padding: '16px 24px',
+          gap: '8px'
         }}
       >
         <Button
           onClick={() => {
             if (!isSubmitting) {
-              onClose()
-              resetStudentState()
+              onClose();
+              resetStudentState();
             }
           }}
           variant="outlined"
           sx={{
-            textTransform: "none",
-            minWidth: "100px",
+            textTransform: 'none',
+            minWidth: '100px'
           }}
           disabled={isSubmitting}
         >
@@ -525,15 +596,15 @@ const StudentForm = ({ open, onClose, onSave, initialStudent }) => {
           color="primary"
           disabled={!isFormValid() || isSubmitting}
           sx={{
-            textTransform: "none",
-            minWidth: "100px",
+            textTransform: 'none',
+            minWidth: '100px'
           }}
         >
-          {isSubmitting ? "Guardando..." : "Guardar"}
+          {isSubmitting ? 'Guardando...' : 'Guardar'}
         </Button>
       </DialogActions>
     </Dialog>
-  )
-}
+  );
+};
 
-export default StudentForm
+export default StudentForm;

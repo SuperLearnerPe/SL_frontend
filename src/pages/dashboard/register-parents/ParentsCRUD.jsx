@@ -101,9 +101,11 @@ export default function ParentsCRUD() {
       }
     } catch (error) {
       console.error("Error al guardar padre/madre:", error)
+      const errorMessage = error.message || "Error al guardar padre/madre. Por favor, inténtelo de nuevo.";
+      
       Swal.fire({
         title: "Error",
-        text: error.message || "Error al guardar padre/madre. Por favor, inténtelo de nuevo.",
+        html: errorMessage.replace(/\n/g, '<br>'),
         icon: "error",
         confirmButtonText: "Ok",
       })

@@ -39,7 +39,7 @@ export default function MainDrawer({ window }) {
           container={container}
           variant="temporary"
           open={drawerOpen}
-          onClose={() => handlerDrawerOpen(!drawerOpen)}
+          onClose={() => handlerDrawerOpen(false)}
           ModalProps={{ keepMounted: true }}
           sx={{
             display: { xs: 'block', lg: 'none' },
