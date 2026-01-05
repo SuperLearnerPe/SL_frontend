@@ -36,16 +36,7 @@ import {
 } from "@mui/icons-material"
 import { getAllStudentsWithCourses, assignCoursesToStudent, removeCoursesFromStudent } from "./student-courses-api"
 
-const courses = [
-  { id: 1, name: "Inglés 5 - 7", dia: "Tuesday", horario: "2:30 pm - 4:30 pm" },
-  { id: 2, name: "Biblioteca", dia: "Monday", horario: "2:30 pm - 4:30 pm" },
-  { id: 3, name: "Arte", dia: "Wednesday", horario: "2:30 pm - 4:30 pm" },
-  { id: 4, name: "Lectura y escritura", dia: "Thursday", horario: "2:30 pm - 4:30 pm" },
-  { id: 5, name: "Juegos y deportes en la loza", dia: "Friday", horario: "2:30 pm - 4:30 pm" },
-  { id: 6, name: "Inglés 8 - 12", dia: "Saturday", horario: "3:00 pm - 5:00 pm" },
-  { id: 7, name: "Música", dia: "Sunday", horario: "2:00 pm - 4:00 pm" },
-  { id: 8, name: "Matemáticas", dia: "Saturday", horario: "10:00 am - 12:00 pm" },
-]
+const BASE_URL = import.meta.env.VITE_API_URL;
 
 const StudentCoursesManager = () => {
   const [students, setStudents] = useState([])
@@ -55,9 +46,11 @@ const StudentCoursesManager = () => {
   const [selectedCourses, setSelectedCourses] = useState([])
   const [searchTerm, setSearchTerm] = useState("")
   const [snackbar, setSnackbar] = useState({ open: false, message: "", severity: "success" })
+  const [courses, setCourses] = useState([])
 
   useEffect(() => {
     fetchStudentsWithCourses()
+    fetchCourses()
   }, [])
 
   const fetchStudentsWithCourses = async () => {
@@ -70,6 +63,34 @@ const StudentCoursesManager = () => {
         message: "Error al cargar los estudiantes",
         severity: "error",
       })
+    }
+  }
+
+  const fetchCourses = async () => {
+    try {
+      const token = localStorage.getItem('access_token');
+      const response = await fetch(`${BASE_URL}/api/course/`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token && { 'Authorization': `Token ${token}` })
+        }
+      });
+      if (!response.ok) throw new Error('Failed to fetch courses');
+      const data = await response.json();
+      // Adaptar los datos del API al formato esperado
+      const adaptedCourses = data.map(course => ({
+        id: course.id,
+        name: course.name,
+        dia: course.day || 'N/A',
+        horario: course.start_time && course.end_time 
+          ? `${course.start_time} - ${course.end_time}` 
+          : 'N/A'
+      }));
+      setCourses(adaptedCourses);
+    } catch (error) {
+      console.error('Error al cargar cursos:', error);
+      setCourses([]);
     }
   }
 

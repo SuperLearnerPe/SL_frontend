@@ -103,3 +103,12 @@ export const enableVolunteer = async (volunteerId) => {
   if (!response.ok) throw new Error('Failed to enable volunteer');
   return response.json();
 };
+
+export const getCourses = async () => {
+  const response = await fetch(`${BASE_URL}/api/course/`, {
+    method: 'GET',
+    headers: getHeaders(),
+  });
+  if (!response.ok) throw new Error('Failed to fetch courses');
+  return response.json();
+};

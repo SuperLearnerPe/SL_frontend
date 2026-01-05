@@ -5,22 +5,14 @@ import { LocalizationProvider, DatePicker } from '@mui/x-date-pickers';
 import { es } from 'date-fns/locale';
 import { isValid, parseISO } from 'date-fns';
 import countryList from 'react-select-country-list';
-
-const courses = [
-  { id: 1, name: 'Inglés 5 - 7' },
-  { id: 2, name: 'Biblioteca' },
-  { id: 3, name: 'Arte' },
-  { id: 4, name: 'Lectura y Escritura' },
-  { id: 5, name: 'Juegos y deportes en la loza' },
-  { id: 6, name: 'Inglés 8 - 12' },
-  { id: 7, name: 'Música' },
-  { id: 8, name: 'Matematicas' },
-];
+import { getCourses } from './api';
 
 export default function VolunteerForm({ open, onClose, onSave, volunteer, setVolunteer }) {
   const [errors, setErrors] = useState({});
   const [showCourseSelect, setShowCourseSelect] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [courses, setCourses] = useState([]);
+  const [loadingCourses, setLoadingCourses] = useState(false);
   
   // Obtener la lista completa de países usando useMemo para optimizar
   const countries = useMemo(() => countryList().getData(), []);
@@ -30,8 +22,26 @@ export default function VolunteerForm({ open, onClose, onSave, volunteer, setVol
       setErrors({});
       const isTeacher = volunteer?.role === 2;
       setShowCourseSelect(isTeacher);
+      
+      // Cargar cursos desde la API
+      if (isTeacher) {
+        fetchCourses();
+      }
     }
   }, [open, volunteer]);
+
+  const fetchCourses = async () => {
+    setLoadingCourses(true);
+    try {
+      const coursesData = await getCourses();
+      setCourses(coursesData || []);
+    } catch (error) {
+      console.error('Error al cargar cursos:', error);
+      setCourses([]);
+    } finally {
+      setLoadingCourses(false);
+    }
+  };
 
   const validateField = (name, value) => {
     let error = '';

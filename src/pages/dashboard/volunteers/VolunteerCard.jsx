@@ -2,18 +2,7 @@ import React from 'react';
 import { Card, CardContent, Typography, Button, Box, Avatar, Chip, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle } from '@mui/material';
 import { Edit as EditIcon, Block as BlockIcon, CheckCircle as CheckCircleIcon, School as SchoolIcon } from '@mui/icons-material';
 
-const courses = [
-  { id: 1, name: 'Inglés 5 - 7' },
-  { id: 2, name: 'Biblioteca' },
-  { id: 3, name: 'Arte' },
-  { id: 4, name: 'Lectura y Escritura' },
-  { id: 5, name: 'Juegos y deportes en la loza' },
-  { id: 6, name: 'Inglés 8 - 12' },
-  { id: 7, name: 'Música' },
-  { id: 8, name: 'Matematicas' },
-];
-
-export default function VolunteerCard({ volunteer, onEdit, onToggleStatus }) {
+export default function VolunteerCard({ volunteer, onEdit, onToggleStatus, courses = [] }) {
   const [openConfirm, setOpenConfirm] = React.useState(false);
 
   const handleToggleStatusClick = () => {

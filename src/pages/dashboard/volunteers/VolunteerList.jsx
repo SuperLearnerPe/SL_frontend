@@ -5,7 +5,7 @@ import VolunteerTable from './VolunteerTable';
 import VolunteerCardSkeleton from './VolunteerCardSkeleton';
 import VolunteerTableSkeleton from './VolunteerTableSkeleton';
 
-const VolunteerList = ({ volunteers, loading, viewMode, onEdit, onToggleStatus, page, totalPages, onPageChange }) => {
+const VolunteerList = ({ volunteers, loading, viewMode, onEdit, onToggleStatus, page, totalPages, onPageChange, courses }) => {
   if (loading) {
     return viewMode === 'card' ? (
       <Grid container spacing={3}>
@@ -30,6 +30,7 @@ const VolunteerList = ({ volunteers, loading, viewMode, onEdit, onToggleStatus, 
                 volunteer={volunteer}
                 onEdit={onEdit}
                 onToggleStatus={onToggleStatus}
+                courses={courses}
               />
             </Grid>
           ))}
@@ -39,6 +40,7 @@ const VolunteerList = ({ volunteers, loading, viewMode, onEdit, onToggleStatus, 
           volunteers={volunteers}
           onEdit={onEdit}
           onToggleStatus={onToggleStatus}
+          courses={courses}
         />
       )}
       <Pagination

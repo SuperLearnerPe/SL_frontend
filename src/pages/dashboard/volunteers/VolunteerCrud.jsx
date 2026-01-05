@@ -5,7 +5,7 @@ import VolunteerForm from './VolunteerForm';
 import SearchAndFilterBar from './SearchAndFilterBar';
 import ConfirmDialog from './ConfirmDialog';
 import CustomSnackbar from './CustomSnackbar';
-import { getVolunteers, updateVolunteer, createVolunteer, disableVolunteer, enableVolunteer } from './api';
+import { getVolunteers, updateVolunteer, createVolunteer, disableVolunteer, enableVolunteer, getCourses } from './api';
 
 export default function Component() {
   const [volunteers, setVolunteers] = useState([]);
@@ -21,9 +21,11 @@ export default function Component() {
   const [page, setPage] = useState(1);
   const itemsPerPage = 6;
   const [isSaving, setIsSaving] = useState(false);
+  const [courses, setCourses] = useState([]);
 
   useEffect(() => {
     fetchVolunteers();
+    fetchCourses();
   }, []);
 
   const fetchVolunteers = async () => {
@@ -35,6 +37,16 @@ export default function Component() {
       setSnackbar({ open: true, message: 'Error al cargar voluntarios', severity: 'error' });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchCourses = async () => {
+    try {
+      const data = await getCourses();
+      setCourses(data || []);
+    } catch (error) {
+      console.error('Error al cargar cursos:', error);
+      setCourses([]);
     }
   };
 
@@ -256,6 +268,7 @@ export default function Component() {
         page={page}
         totalPages={Math.ceil(filteredVolunteers.length / itemsPerPage)}
         onPageChange={(event, value) => setPage(value)}
+        courses={courses}
       />
 
       <VolunteerForm
