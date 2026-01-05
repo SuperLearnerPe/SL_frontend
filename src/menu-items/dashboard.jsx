@@ -9,7 +9,8 @@ import {
   UserAddOutlined,
   TeamOutlined,
   SkinOutlined,
-  FileExcelOutlined
+  FileExcelOutlined,
+  HomeOutlined
 } from "@ant-design/icons"
 import { useUser } from '../context/UserContext';
 
@@ -25,7 +26,8 @@ const icons = {
   UserAddOutlined,
   TeamOutlined,
   SkinOutlined,
-  FileExcelOutlined
+  FileExcelOutlined,
+  HomeOutlined
 };
 
 // Manejar el cierre de sesión
@@ -41,6 +43,14 @@ const Dashboard = () => {
   const { role } = useUser();
 
   const children = [
+    {
+      id: 'home',
+      title: 'Inicio',
+      type: 'item',
+      url: '/home',
+      icon: icons.HomeOutlined,
+      breadcrumbs: false,
+    },
     {
       id: 'courses',
       title: 'Cursos',

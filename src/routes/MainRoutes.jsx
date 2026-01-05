@@ -1,7 +1,10 @@
 import { lazy } from 'react';
+import { Navigate } from 'react-router-dom';
 import Loadable from 'components/Loadable';
 import Dashboard from 'layout/Dashboard';
 import PrivateRoute from 'routes/PrivateRoute';
+
+const Home = Loadable(lazy(() => import('pages/dashboard/home/Home')));
 const DashboardDefault = Loadable(lazy(() => import('pages/dashboard/index')));
 const AttendancePage = Loadable(lazy(() => import('pages/dashboard/courses/attendance/AttendancePage')));
 const MisAlumnos = Loadable(lazy(() => import('pages/dashboard/students/students')));
@@ -23,7 +26,11 @@ const MainRoutes = [
     children: [
       {
         path: '',
-        element: <DashboardDefault />
+        element: <Home />
+      },
+      {
+        path: 'home',
+        element: <Home />
       },
       {
         path: 'dashboard',
@@ -81,6 +88,10 @@ const MainRoutes = [
             <ExcelReports/>
           </PrivateRoute>
         )
+      },
+      {
+        path: '*',
+        element: <Navigate to="/home" replace />
       }
     ]
   }

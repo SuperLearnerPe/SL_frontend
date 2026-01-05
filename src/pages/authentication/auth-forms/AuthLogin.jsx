@@ -88,7 +88,7 @@ export default function AuthLogin({ isDemo = false }) {
         timer: 600,
         showConfirmButton: false,
       }).then(() => {
-        navigate('/courses');
+        navigate('/home');
       });
     } catch (error) {
       console.error('Error al iniciar sesión:', error);

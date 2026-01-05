@@ -33,7 +33,7 @@ const PrivateRoute = ({ children }) => {
 
   // Check if the route is '/volunteers' and the user's ID is not 1
   if (location.pathname === '/volunteers' && localStorage.getItem('role') !== '1') {
-    return <Navigate to="/courses" replace />;
+    return <Navigate to="/home" replace />;
   }
 
   return children;
