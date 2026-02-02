@@ -8,7 +8,7 @@ import { env } from 'process';
 
 export default defineConfig({
   plugins: [react(), jsconfigPaths()],
-  base: '/', 
+  base: '/SL_frontend/', 
   define: {
     global: 'window'
   },
